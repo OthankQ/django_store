@@ -12,7 +12,7 @@ class InvoiceInline(admin.TabularInline):
 #     extra = 3
 
 class UserAdmin(admin.ModelAdmin):
-    fieldsets = [('Username', {'fields': ['name']}), ('Phone', {'fields': ['phone_number']}),]
+    fieldsets = [('General Information', {'fields': ('name', 'phone_number', 'password')}),]
     inlines = [InvoiceInline]
 
 admin.site.register(User, UserAdmin)
