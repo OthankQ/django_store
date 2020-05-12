@@ -36,7 +36,7 @@ class Invoice(models.Model):
         return self.invoice_id      
 
 
-class LineItems(models.Model):
+class LineItem(models.Model):
     line_item_id = models.AutoField(primary_key=True)
     invoice_id = models.ForeignKey(Invoice, on_delete=models.CASCADE)
     item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
