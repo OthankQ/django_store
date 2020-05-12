@@ -22,7 +22,7 @@ class Item(models.Model):
     stock = models.IntegerField()
 
     def __str__(self):
-        return self.item_id
+        return self.name
 
 
 class Invoice(models.Model):
@@ -33,7 +33,7 @@ class Invoice(models.Model):
     etc = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.invoice_id      
+        return str(self.invoice_id)
 
 
 class LineItem(models.Model):

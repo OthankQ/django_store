@@ -48,13 +48,13 @@ class Migration(migrations.Migration):
                 ('line_item_id', models.AutoField(primary_key=True, serialize=False)),
                 ('line_item_name', models.CharField(max_length=255)),
                 ('quantity', models.IntegerField()),
-                ('invoice_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='home.Invoice')),
-                ('item_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='home.Item')),
+                ('invoice_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shop.Invoice')),
+                ('item_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shop.Item')),
             ],
         ),
         migrations.AddField(
             model_name='invoice',
             name='user_id',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='home.User'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='shop.User'),
         ),
     ]
