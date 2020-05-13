@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 
 class User(models.Model):
-    user_id = models.AutoField(primary_key=True)
+    user_id = models.CharField(max_length=255, default='no name')
     name = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
     phone_number = models.IntegerField()
@@ -41,6 +41,7 @@ class LineItem(models.Model):
     invoice_id = models.ForeignKey(Invoice, on_delete=models.CASCADE)
     item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
     line_item_name = models.CharField(max_length=255)
+    line_item_price = models.DecimalField(max_digits=7, decimal_places=2, default=0)
     quantity = models.IntegerField()
 
     def __str__(self):
