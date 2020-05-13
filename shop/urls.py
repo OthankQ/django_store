@@ -1,8 +1,15 @@
-from rest_framework import routers
-from .api import UserViewSet, ItemViewSet
+# from rest_framework import routers
+# from .api import UserViewSet, ItemViewSet
+from django.urls import path, include
+from .views import GetPostUser
 
-router = routers.DefaultRouter()
-router.register('api/user', UserViewSet, 'user')
-router.register('api/item', ItemViewSet, 'item')
+urlpatterns = [
+    path('user/', GetPostUser, name='name')
+]
 
-urlpatterns = router.urls
+
+# router = routers.DefaultRouter()
+# router.register('api/user', UserViewSet, 'user')
+# router.register('api/item', ItemViewSet, 'item')
+
+# urlpatterns = router.urls
