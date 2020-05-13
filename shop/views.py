@@ -33,12 +33,15 @@ def GetPostUser(request):
         password = data['password']
         etc = data['etc']
 
-        parsed_data = models.User(
+        parsed_data = User(
             user_id=user_id, name=user_name, password=password, phone_number=phone, etc=etc)
 
         parsed_data.save()
 
         print('User has been added successfully')
+
+        return HttpResponse('success', content_type='text/plain')
+
 
 
 def GetPostItem(request):
@@ -74,6 +77,8 @@ def GetPostItem(request):
 
         print('Item has been added successfully')
 
+        return HttpResponse('success', content_type='text/plain')
+
 
 def GetPostInvoice(request):
     if request.method == 'GET':
@@ -105,6 +110,9 @@ def GetPostInvoice(request):
         parsed_data.save()
 
         print('Invoice has been added successfully')
+
+        return HttpResponse('success', content_type='text/plain')
+
 
 
 def GetPostLineItem(request):
@@ -141,3 +149,6 @@ def GetPostLineItem(request):
         parsed_data.save()
 
         print('LineItem has been added successfully')
+
+        return HttpResponse('success', content_type='text/plain')
+
