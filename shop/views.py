@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 from django.http import HttpResponse
 from .models import User
+import json
 
 def GetPostUser(request):
     if request.method == 'GET':
