@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import User, Item
+from .models import User, Item, Invoice, LineItem
 import json
 
 def GetPostUser(request):
@@ -67,7 +67,7 @@ def GetPostItem(request):
         image_id = data['image_id']
         stock = data['stock']
 
-        parsed_data = models.Item(
+        parsed_data = Item(
             item_id=item_id, name=name, desc=desc, password=password, phone_number=phone, etc=etc)
 
         parsed_data.save()
@@ -78,14 +78,14 @@ def GetPostItem(request):
 def GetPostInvoice(request):
     if request.method == 'GET':
 
-        Invoices = Item.objects.all().order_by().values()
+        Invoices = Invoice.objects.all().order_by().values()
 
         data = [None] * len(Invoices)
 
         for i in range(0, len(Invoices)):
 
-            data[i] = {'invoice_id': Items[i]['invoice_id'], 'user_id': Items[i]
-                       ['user_id'], 'date': Items[i]['date'], 'status': Items[i]['status']}
+            data[i] = {'invoice_id': Invoices[i]['invoice_id'], 'user_id': Items[i]
+                       ['user_id'], 'date': Invoices[i]['date'], 'status': Items[i]['status']}
 
         data = json.dumps(data)
 
@@ -99,7 +99,7 @@ def GetPostInvoice(request):
         date = data['date']
         status = data['status']
 
-        parsed_data = models.Item(
+        parsed_data = Item(
             invoice_id=invoice_id, user_id=user_id, date=date, status=status)
 
         parsed_data.save()
@@ -111,14 +111,14 @@ def GetPostLineItem(request):
 
     if request.method == 'GET':
 
-        LineItems = Item.objects.all().order_by().values()
+        LineItems = LineItem.objects.all().order_by().values()
 
         data = [None] * len(LineItems)
 
         for i in range(0, len(LineItems)):
 
-            data[i] = {'line_item_id': Items[i]['line_item_id'], 'item_id': Items[i]['item_id'], 'line_item_name': Items[i]
-                       ['line_item_name'], 'line_item_price': str(Item[i]['line_item_price']), 'quantity': Item[i]['quantity']}
+            data[i] = {'line_item_id': LineItems[i]['line_item_id'], 'item_id': LineItems[i]['item_id'], 'line_item_name': Items[i]
+                       ['line_item_name'], 'line_item_price': str(LineItems[i]['line_item_price']), 'quantity': Item[i]['quantity']}
 
         data = json.dumps(data)
 
@@ -135,7 +135,7 @@ def GetPostLineItem(request):
         line_item_price = data['line_item_price']
         quantity = data['quantity']
 
-        parsed_data = models.Item(
+        parsed_data = Item(
             line_item_id=line_item_id, item_id=item_id, line_item_name=line_item_name, line_item_price=line_item_price, quantity=quantity)
 
         parsed_data.save()
