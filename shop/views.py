@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from .models import User, Item
 import json
 
-
 def GetPostUser(request):
     if request.method == 'GET':
 
@@ -49,10 +48,10 @@ def GetPostItem(request):
 
         data = [None] * len(Items)
 
-        for i in Items:
+        for i in range(0, len(Items)):
 
             data[i] = {'item_id': Items[i]['item_id'], 'item_name': Items[i]
-                       ['name'], 'price': Items[i]['price'], 'stock': Items[i]['stock']}
+                       ['name'], 'price': str(Items[i]['price']), 'stock': Items[i]['stock']}
 
         data = json.dumps(data)
 
@@ -83,7 +82,7 @@ def GetPostInvoice(request):
 
         data = [None] * len(Invoices)
 
-        for i in Invoices:
+        for i in range(0, len(Invoices)):
 
             data[i] = {'invoice_id': Items[i]['invoice_id'], 'user_id': Items[i]
                        ['user_id'], 'date': Items[i]['date'], 'status': Items[i]['status']}
@@ -116,10 +115,10 @@ def GetPostLineItem(request):
 
         data = [None] * len(LineItems)
 
-        for i in LineItems:
+        for i in range(0, len(LineItems)):
 
             data[i] = {'line_item_id': Items[i]['line_item_id'], 'item_id': Items[i]['item_id'], 'line_item_name': Items[i]
-                       ['line_item_name'], 'line_item_price': Item[i]['line_item_price'], 'quantity': Item[i]['quantity']}
+                       ['line_item_name'], 'line_item_price': str(Item[i]['line_item_price']), 'quantity': Item[i]['quantity']}
 
         data = json.dumps(data)
 
