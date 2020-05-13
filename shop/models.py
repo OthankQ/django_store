@@ -7,7 +7,7 @@ class User(models.Model):
     name = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
     phone_number = models.IntegerField()
-    etc = models.CharField(max_length=255)
+    # etc = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name
@@ -30,7 +30,7 @@ class Invoice(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField('invoice creation date')
     status = models.CharField(max_length=255)
-    etc = models.CharField(max_length=255)
+    # etc = models.CharField(max_length=255)
 
     def __str__(self):
         return str(self.invoice_id)

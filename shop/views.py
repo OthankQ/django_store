@@ -31,10 +31,9 @@ def GetPostUser(request):
         user_name = data['user_name']
         phone = data['phone_number']
         password = data['password']
-        etc = data['etc']
 
         parsed_data = User(
-            user_id=user_id, name=user_name, password=password, phone_number=phone, etc=etc)
+            user_id=user_id, name=user_name, password=password, phone_number=phone)
 
         parsed_data.save()
 
@@ -89,8 +88,8 @@ def GetPostInvoice(request):
 
         for i in range(0, len(Invoices)):
 
-            data[i] = {'invoice_id': Invoices[i]['invoice_id'], 'user_id': Items[i]
-                       ['user_id'], 'date': Invoices[i]['date'], 'status': Items[i]['status']}
+            data[i] = {'invoice_id': Invoices[i]['invoice_id'], 'user_id': Invoices[i]
+                       ['user_id'], 'date': Invoices[i]['date'], 'status': Invoices[i]['status']}
 
         data = json.dumps(data)
 
@@ -125,8 +124,8 @@ def GetPostLineItem(request):
 
         for i in range(0, len(LineItems)):
 
-            data[i] = {'line_item_id': LineItems[i]['line_item_id'], 'item_id': LineItems[i]['item_id'], 'line_item_name': Items[i]
-                       ['line_item_name'], 'line_item_price': str(LineItems[i]['line_item_price']), 'quantity': Item[i]['quantity']}
+            data[i] = {'line_item_id': LineItems[i]['line_item_id'], 'item_id': LineItems[i]['item_id'], 'line_item_name': LineItems[i]
+                       ['line_item_name'], 'line_item_price': str(LineItems[i]['line_item_price']), 'quantity': LineItem[i]['quantity']}
 
         data = json.dumps(data)
 
