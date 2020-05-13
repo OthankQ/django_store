@@ -40,7 +40,7 @@ class LineItem(models.Model):
     line_item_id = models.AutoField(primary_key=True)
     invoice_id = models.ForeignKey(Invoice, on_delete=models.CASCADE)
     item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
-    line_item_name = models.CharField(max_length=255)
+    # line_item_name = models.CharField(max_length=255)
     line_item_price = models.DecimalField(max_digits=7, decimal_places=2, default=0)
     quantity = models.IntegerField()
 
