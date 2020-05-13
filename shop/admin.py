@@ -13,7 +13,7 @@ class LineItemInline(admin.TabularInline):
     extra = 3
 
 class UserAdmin(admin.ModelAdmin):
-    fieldsets = [('General Information', {'fields': ('name', 'phone_number', 'password')}),]
+    fieldsets = [('General Information', {'fields': ('user_id', 'name', 'phone_number', 'password')}),]
     inlines = [InvoiceInline]
 
 class InvoiceAdmin(admin.ModelAdmin):
