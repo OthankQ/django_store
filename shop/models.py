@@ -6,7 +6,7 @@ class User(models.Model):
     user_id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
-    phone_number = models.IntegerField()
+    phone_number = models.IntegerField(null=True, blank=True)
     # etc = models.CharField(max_length=255)
 
     def __str__(self):
@@ -15,11 +15,11 @@ class User(models.Model):
 
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    desc = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True)
+    desc = models.CharField(max_length=255, blank=True)
     price = models.DecimalField(max_digits=7, decimal_places=2)
-    image_id = models.IntegerField()
-    stock = models.IntegerField()
+    image_id = models.IntegerField(null=True, blank=True)
+    stock = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -29,7 +29,7 @@ class Invoice(models.Model):
     invoice_id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField('invoice creation date')
-    status = models.CharField(max_length=255)
+    status = models.CharField(max_length=255, default="cart")
     # etc = models.CharField(max_length=255)
 
     def __str__(self):
@@ -42,7 +42,7 @@ class LineItem(models.Model):
     item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
     # line_item_name = models.CharField(max_length=255)
     line_item_price = models.DecimalField(max_digits=7, decimal_places=2, default=0)
-    quantity = models.IntegerField()
+    quantity = models.IntegerField(default=0)
 
     def __str__(self):
         return self.line_item_name
