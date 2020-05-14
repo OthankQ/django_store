@@ -4,24 +4,31 @@ from django.contrib import admin
 from .models import User, Item, Invoice, LineItem
 from django.contrib.auth.admin import UserAdmin
 
+
 class InvoiceInline(admin.TabularInline):
     model = Invoice
     extra = 1
+
 
 class LineItemInline(admin.TabularInline):
     model = LineItem
     extra = 3
 
+
 class UserAdmin(admin.ModelAdmin):
-    fieldsets = [('General Information', {'fields': ('user_id', 'name', 'phone_number', 'password')}),]
+    fieldsets = [('General Information', {'fields': (
+        'user_id', 'name', 'phone_number', 'password')}), ]
     inlines = [InvoiceInline]
 
+
 class InvoiceAdmin(admin.ModelAdmin):
-    fieldsets = [(None, {'fields': ('user_id', 'date', 'status')})]    
+    fieldsets = [(None, {'fields': ('date', 'status')})]
     inlines = [LineItemInline]
 
+
 class ItemAdmin(admin.ModelAdmin):
-    fieldsets = [(None, {'fields': ('name', 'desc', 'price', 'stock', 'image_id')})]
+    fieldsets = [
+        (None, {'fields': ('name', 'desc', 'price', 'stock', 'image_id')})]
 
 
 admin.site.register(User, UserAdmin)

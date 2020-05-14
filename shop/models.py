@@ -58,4 +58,4 @@ class LineItem(models.Model):
     quantity = models.IntegerField(default=0)
 
     def __str__(self):
-        return str(self.line_item_id)
+        return str(self.line_item)
