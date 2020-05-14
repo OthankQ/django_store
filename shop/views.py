@@ -7,7 +7,7 @@ import json
 
 def UpdateLineItemPrice(quantity, item_id):
     # query for that specific line item using item_id
-    print('up to here')
+    # print('up to here')
     print(item_id)
     item = Item.objects.filter(item_id=item_id).values()
     print(item)
@@ -24,6 +24,25 @@ def UpdateLineItemPrice(quantity, item_id):
 
 def GetPostUser(request):
     if request.method == 'GET':
+
+        # When query string exists
+        if request.GET.get('id'):
+
+            # Extract the parameter and save it to requested_id
+            requested_id = request.GET.get('id')
+
+            # Query for the row that matches the criteria
+            requested_user = User.objects.filter(user_id=requested_id).values()
+
+            # Create a dict with the values retrieved from the queried data point
+            data = {'user_id': requested_user[0]['user_id'],
+                    'name': requested_user[0]['name'], 'phone': requested_user[0]['phone_number']}
+
+            # Convet the data to transferable json
+            data = json.dumps(data)
+
+            # Return that data
+            return HttpResponse(data, content_type='application/json')
 
         # Query for all Users
         Users = User.objects.all().order_by().values()
@@ -106,9 +125,9 @@ def GetPostInvoice(request):
 
         for i in range(0, len(Invoices)):
 
-            data[i] = {'invoice_id': Invoices[i]['invoice_id'], 
-                'user_id': Invoices[i]['user_id'], 'date': str(Invoices[i]['date']),
-                 'status': Invoices[i]['status_id']}
+            data[i] = {'invoice_id': Invoices[i]['invoice_id'],
+                       'user_id': Invoices[i]['user_id'], 'date': str(Invoices[i]['date']),
+                       'status': Invoices[i]['status_id']}
 
         data = json.dumps(data)
 
@@ -142,7 +161,8 @@ def GetPostLineItem(request):
 
         for i in range(0, len(LineItems)):
 
-            data[i] = {'line_item_id': LineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
+            data[i] = {'line_item_id': LineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]
+                       ['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
 
         data = json.dumps(data)
 
