@@ -49,7 +49,7 @@ def GetPostUser(request):
 
             else:
 
-                return HttpResponse('None', content_type='text/plain')
+                return HttpResponse('none', content_type='text/plain')
 
         # Query for all Users
         Users = User.objects.all().order_by().values()
