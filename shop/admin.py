@@ -6,7 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 
 class InvoiceInline(admin.TabularInline):
     model = Invoice
-    extra = 3
+    extra = 1
 
 class LineItemInline(admin.TabularInline):
     model = LineItem

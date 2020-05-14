@@ -4,7 +4,7 @@ from django.db import models
 
 class User(models.Model):
     user_id = models.CharField(max_length=255, primary_key=True)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255)
     phone_number = models.IntegerField(null=True, blank=True)
     # etc = models.CharField(max_length=255)
@@ -15,7 +15,7 @@ class User(models.Model):
 
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255)
     desc = models.CharField(max_length=255, blank=True)
     price = models.DecimalField(max_digits=7, decimal_places=2)
     image_id = models.IntegerField(null=True, blank=True)
