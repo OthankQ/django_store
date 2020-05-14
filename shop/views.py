@@ -32,17 +32,24 @@ def GetPostUser(request):
             requested_id = request.GET.get('id')
 
             # Query for the row that matches the criteria
-            requested_user = User.objects.filter(user_id=requested_id).values()
+            requested_user = User.objects.filter(
+                user_id=requested_id).values()
 
-            # Create a dict with the values retrieved from the queried data point
-            data = {'user_id': requested_user[0]['user_id'],
-                    'name': requested_user[0]['name'], 'phone': requested_user[0]['phone_number']}
+            if len(requested_user) > 0:
 
-            # Convet the data to transferable json
-            data = json.dumps(data)
+                # Create a dict with the values retrieved from the queried data point
+                data = {'user_id': requested_user[0]['user_id'],
+                        'name': requested_user[0]['name'], 'phone': requested_user[0]['phone_number']}
 
-            # Return that data
-            return HttpResponse(data, content_type='application/json')
+                # Convet the data to transferable json
+                data = json.dumps(data)
+
+                # Return that data
+                return HttpResponse(data, content_type='application/json')
+
+            else:
+
+                return HttpResponse('No query returned', content_type='text/plain')
 
         # Query for all Users
         Users = User.objects.all().order_by().values()
