@@ -26,10 +26,11 @@ class Item(models.Model):
 
 
 class Invoice(models.Model):
+    INVOICE_STATUS = (('cart', 'cart'),('pending', 'pending'),('shipped', 'shipped'), ('fulfilled', 'fulfilled'))
     invoice_id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField('invoice creation date')
-    status = models.CharField(max_length=255, default="cart")
+    status = models.CharField(max_length=10, default="cart", choices=INVOICE_STATUS)
     # etc = models.CharField(max_length=255)
 
     def __str__(self):
@@ -45,4 +46,4 @@ class LineItem(models.Model):
     quantity = models.IntegerField(default=0)
 
     def __str__(self):
-        return self.line_item_name
+        return str(self.line_item_id)
