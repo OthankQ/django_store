@@ -4,6 +4,24 @@ from django.http import HttpResponse
 from .models import User, Item, Invoice, LineItem
 import json
 
+
+def UpdateLineItemPrice(quantity, item_id):
+    # query for that specific line item using item_id
+    print('up to here')
+    print(item_id)
+    item = Item.objects.filter(item_id=item_id).values()
+    print(item)
+
+    # query for current item price of that item and store it in a variable
+    current_item_price = item[0]['price']
+
+    # calculate the total price of the line item and store it in a variable
+    calculated_line_item_price = current_item_price * quantity
+    print(calculated_line_item_price)
+    # Save that price into the existing row
+    return calculated_line_item_price
+
+
 def GetPostUser(request):
     if request.method == 'GET':
 
@@ -42,8 +60,8 @@ def GetPostUser(request):
         return HttpResponse('success', content_type='text/plain')
 
 
-
 def GetPostItem(request):
+
     if request.method == 'GET':
 
         Items = Item.objects.all().order_by().values()
@@ -64,13 +82,13 @@ def GetPostItem(request):
         data = json.loads(request.body)
         item_id = data['item_id']
         name = data['name']
-        desc = data['desc']
+        # desc = data['desc']
         price = data['price']
-        image_id = data['image_id']
+        # image_id = data['image_id']
         stock = data['stock']
 
         parsed_data = Item(
-            item_id=item_id, name=name, desc=desc, password=password, phone_number=phone, etc=etc)
+            item_id=item_id, name=name, price=price, stock=stock)
 
         parsed_data.save()
 
@@ -103,7 +121,7 @@ def GetPostInvoice(request):
         date = data['date']
         status = data['status']
 
-        parsed_data = Item(
+        parsed_data = Invoice(
             invoice_id=invoice_id, user_id=user_id, date=date, status=status)
 
         parsed_data.save()
@@ -111,7 +129,6 @@ def GetPostInvoice(request):
         print('Invoice has been added successfully')
 
         return HttpResponse('success', content_type='text/plain')
-
 
 
 def GetPostLineItem(request):
@@ -136,18 +153,22 @@ def GetPostLineItem(request):
     elif request.method == 'POST':
 
         data = json.loads(request.body)
+
+        invoice_id = data['invoice_id']
         line_item_id = data['line_item_id']
         item_id = data['item_id']
-        line_item_name = data['line_item_name']
-        line_item_price = data['line_item_price']
         quantity = data['quantity']
 
-        parsed_data = Item(
-            line_item_id=line_item_id, item_id=item_id, line_item_name=line_item_name, line_item_price=line_item_price, quantity=quantity)
+        line_item_price = UpdateLineItemPrice(quantity, item_id)
+
+        parsed_data = LineItem(
+            invoice_id=invoice_id, line_item_id=line_item_id, line_item_price=line_item_price, quantity=quantity)
+
+        # problem: if I try to assign invoice_id, it doesn't let me because it is not an instance of an Invoice.
+        # However if I get rid of it, I can't add it either because in the lineitem model, invoice_id is a foreign key and I cannot have it as null
 
         parsed_data.save()
 
         print('LineItem has been added successfully')
 
         return HttpResponse('success', content_type='text/plain')
-

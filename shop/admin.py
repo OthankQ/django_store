@@ -23,6 +23,7 @@ class InvoiceAdmin(admin.ModelAdmin):
 class ItemAdmin(admin.ModelAdmin):
     fieldsets = [(None, {'fields': ('name', 'desc', 'price', 'stock', 'image_id')})]
 
+
 admin.site.register(User, UserAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Item, ItemAdmin)
