@@ -106,8 +106,9 @@ def GetPostInvoice(request):
 
         for i in range(0, len(Invoices)):
 
-            data[i] = {'invoice_id': Invoices[i]['invoice_id'], 'user_id': Invoices[i]
-                       ['user_id'], 'date': Invoices[i]['date'], 'status': Invoices[i]['status']}
+            data[i] = {'invoice_id': Invoices[i]['invoice_id'], 
+                'user_id': Invoices[i]['user_id'], 'date': str(Invoices[i]['date']),
+                 'status': Invoices[i]['status_id']}
 
         data = json.dumps(data)
 
@@ -141,8 +142,7 @@ def GetPostLineItem(request):
 
         for i in range(0, len(LineItems)):
 
-            data[i] = {'line_item_id': LineItems[i]['line_item_id'], 'item_id': LineItems[i]['item_id'], 'line_item_name': LineItems[i]
-                       ['line_item_name'], 'line_item_price': str(LineItems[i]['line_item_price']), 'quantity': LineItem[i]['quantity']}
+            data[i] = {'line_item_id': LineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
 
         data = json.dumps(data)
 
@@ -151,22 +151,19 @@ def GetPostLineItem(request):
         return HttpResponse(data, content_type='application/json')
 
     elif request.method == 'POST':
-
         data = json.loads(request.body)
-
         invoice_id = data['invoice_id']
-        line_item_id = data['line_item_id']
+        # line_item_id = data['line_item_id']
         item_id = data['item_id']
         quantity = data['quantity']
 
         line_item_price = UpdateLineItemPrice(quantity, item_id)
 
         parsed_data = LineItem(
-            invoice_id=invoice_id, line_item_id=line_item_id, line_item_price=line_item_price, quantity=quantity)
+            invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
         # problem: if I try to assign invoice_id, it doesn't let me because it is not an instance of an Invoice.
         # However if I get rid of it, I can't add it either because in the lineitem model, invoice_id is a foreign key and I cannot have it as null
-
         parsed_data.save()
 
         print('LineItem has been added successfully')

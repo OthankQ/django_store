@@ -37,7 +37,7 @@ class InvoiceStatus(models.Model):
 class Invoice(models.Model):
     # INVOICE_STATUS = (('cart', 'cart'),('pending', 'pending'),('shipped', 'shipped'), ('fulfilled', 'fulfilled'))
     invoice_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField('invoice creation date')
     # status = models.CharField(max_length=10, default="cart", choices=INVOICE_STATUS)
     status = models.ForeignKey(InvoiceStatus, on_delete=models.CASCADE)
@@ -49,9 +49,9 @@ class Invoice(models.Model):
 
 
 class LineItem(models.Model):
-    line_item_id = models.AutoField(primary_key=True)
-    invoice_id = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-    item_id = models.ForeignKey(Item, on_delete=models.CASCADE)
+    line_item = models.AutoField(primary_key=True)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     # line_item_name = models.CharField(max_length=255)
     line_item_price = models.DecimalField(
         max_digits=7, decimal_places=2, default=0)
