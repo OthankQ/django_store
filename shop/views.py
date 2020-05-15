@@ -8,9 +8,9 @@ import json
 def UpdateLineItemPrice(quantity, item_id):
     # query for that specific line item using item_id
     # print('up to here')
-    print(item_id)
+    # print(item_id)
     item = Item.objects.filter(item_id=item_id).values()
-    print(item)
+    # print(item)
 
     # query for current item price of that item and store it in a variable
     current_item_price = item[0]['price']
@@ -105,16 +105,50 @@ def GetPostItem(request):
 
     elif request.method == 'POST':
 
+        # Parse in the data sent by user
         data = json.loads(request.body)
-        item_id = data['item_id']
-        name = data['name']
-        # desc = data['desc']
-        price = data['price']
-        # image_id = data['image_id']
-        stock = data['stock']
 
-        parsed_data = Item(
-            item_id=item_id, name=name, price=price, stock=stock)
+        # Check if there are any existing with matching item_id
+        original_entry = Item.objects.filter(
+            item_id=data['item_id']).values()
+
+        # Update
+        if len(original_entry) > 0:
+
+            indexable_original_entry = list(original_entry)[0]
+
+            if 'stock' in data.keys():
+                indexable_original_entry['stock'] = data['stock']
+
+            if 'name' in data.keys():
+                indexable_original_entry['name'] = data['name']
+
+            if 'desc' in data.keys():
+                indexable_original_entry['desc'] = data['desc']
+
+            if 'price' in data.keys():
+                indexable_original_entry['price'] = data['price']
+
+            stock = indexable_original_entry['stock']
+            name = indexable_original_entry['name']
+            item_id = indexable_original_entry['item_id']
+            price = indexable_original_entry['price']
+
+            parsed_data = Item(
+                item_id=item_id, stock=stock, name=name, price=price)
+
+        # Post
+        else:
+
+            item_id = data['item_id']
+            name = data['name']
+            # desc = data['desc']
+            price = data['price']
+            # image_id = data['image_id']
+            stock = data['stock']
+
+            parsed_data = Item(
+                item_id=item_id, name=name, price=price, stock=stock)
 
         parsed_data.save()
 
@@ -186,23 +220,24 @@ def GetPostLineItem(request):
         # Check if there is already an entry with  line_item_id of the data sent by the user
         # If there is already one, query for that data
 
-        original_entry = list(LineItem.objects.filter(
-            line_item=data['line_item']).values())[0]
+        # Cart
 
-        print(original_entry)
-        print(data)
+        original_entry = LineItem.objects.filter(
+            item_id=data['item_id']).values()
 
         # Update
         if len(original_entry) > 0:
 
+            indexable_original_entry = list(original_entry)[0]
+
             if 'quantity' in data.keys():
 
-                original_entry['quantity'] = data['quantity']
+                indexable_original_entry['quantity'] = data['quantity']
 
-            line_item = original_entry['line_item']
-            quantity = original_entry['quantity']
-            item_id = original_entry['item_id']
-            invoice_id = original_entry['invoice_id']
+            line_item = indexable_original_entry['line_item']
+            quantity = indexable_original_entry['quantity']
+            item_id = indexable_original_entry['item_id']
+            invoice_id = indexable_original_entry['invoice_id']
 
             line_item_price = UpdateLineItemPrice(quantity, item_id)
 
