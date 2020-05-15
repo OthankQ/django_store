@@ -178,19 +178,52 @@ def GetPostLineItem(request):
         return HttpResponse(data, content_type='application/json')
 
     elif request.method == 'POST':
+
+        # Retrieve data from user request
+
         data = json.loads(request.body)
-        invoice_id = data['invoice_id']
-        # line_item_id = data['line_item_id']
-        item_id = data['item_id']
-        quantity = data['quantity']
 
-        line_item_price = UpdateLineItemPrice(quantity, item_id)
+        # Check if there is already an entry with  line_item_id of the data sent by the user
+        # If there is already one, query for that data
 
-        parsed_data = LineItem(
-            invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+        original_entry = list(LineItem.objects.filter(
+            line_item=data['line_item']).values())[0]
 
-        # problem: if I try to assign invoice_id, it doesn't let me because it is not an instance of an Invoice.
-        # However if I get rid of it, I can't add it either because in the lineitem model, invoice_id is a foreign key and I cannot have it as null
+        print(original_entry)
+        print(data)
+
+        # Update
+        if len(original_entry) > 0:
+
+            if 'quantity' in data.keys():
+
+                original_entry['quantity'] = data['quantity']
+
+            line_item = original_entry['line_item']
+            quantity = original_entry['quantity']
+            item_id = original_entry['item_id']
+            invoice_id = original_entry['invoice_id']
+
+            line_item_price = UpdateLineItemPrice(quantity, item_id)
+
+            parsed_data = LineItem(
+                line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+
+        # Post
+
+        # There is no line_item with the same line_item_id
+
+        else:
+            invoice_id = data['invoice_id']
+            # line_item_id = data['line_item_id']
+            item_id = data['item_id']
+            quantity = data['quantity']
+
+            line_item_price = UpdateLineItemPrice(quantity, item_id)
+
+            parsed_data = LineItem(
+                invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+
         parsed_data.save()
 
         print('LineItem has been added successfully')
