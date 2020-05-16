@@ -1,9 +1,9 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import UserAdditionalInfo, Item, Invoice, LineItem
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 import json
 
 
@@ -32,13 +32,13 @@ def GetPostUser(request):
 
             # Extract the parameter and save it to requested_id
             requested_username = request.GET.get('username')
-            print(requested_username)
-            print(type(requested_username))
+            # print(requested_username)
+            # print(type(requested_username))
             # Query for the row that matches the criteria
             requested_user = User.objects.get(
                 username=requested_username)
-            print(requested_user)
-            print(requested_user.id)
+            # print(requested_user)
+            # print(requested_user.id)
             if requested_user:
 
                 # Create a dict with the values retrieved from the queried data point
@@ -87,20 +87,40 @@ def GetPostUser(request):
 
         print('User has been registered successfully')
 
+        # Create Cart
+
+        # Query for the id of the just created user's id number
+        new_user_value = User.objects.filter(username=username).values()
+        new_user_id = new_user_value[0]['id']
+        new_user_registered_time = new_user_value[0]['date_joined']
+
+        new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
+
+        # Use that id number to create new invoice(cart)
+        new_cart = Invoice(user=new_user, status=new_cart_status,
+                           date=new_user_registered_time)
+
+        new_cart.save()
+
         return HttpResponse('success', content_type='text/plain')
 
 
 def UserLogin(request):
 
-    data = json.loads(request.body)
+    # data = json.loads(request.body)
 
-    username = data['username']
-    password = data['password']
+    username = request.POST['username']
+    password = request.POST['password']
 
     user = authenticate(username=username, password=password)
 
     if user is not None:
+
+        # Save user info to session
+
+        login(request, user)
         return HttpResponse('success', content_type='text/plain')
+
     else:
         return HttpResponse('none', content_type='text/plain')
 
@@ -109,7 +129,7 @@ def GetPostItem(request):
 
     if request.method == 'GET':
 
-        Items = Item.objects.all().order_by().values()
+        Items = Item.objects.order_by().values()
 
         data = [None] * len(Items)
 
@@ -178,6 +198,38 @@ def GetPostItem(request):
 
 def GetPostInvoice(request):
     if request.method == 'GET':
+
+        # When there is a specified query string
+        if request.GET.get('id'):
+
+            requested_user_id = request.GET.get('id')
+            requested_invoices = Invoice.objects.filter(
+                user_id=requested_user_id)
+            print(requested_invoices)
+
+            if requested_invoices:
+
+                invoice_array = list()
+
+                for invoice in requested_invoices:
+
+                    data = {'invoice_id': invoice.invoice_id,
+                            'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
+
+                    # Convet the data to transferable json
+                    # data = json.dumps(data)
+
+                    invoice_array.append(data)
+
+                print(invoice_array)
+
+                invoice_json = json.dumps(invoice_array)
+
+                return HttpResponse(invoice_json, content_type='application/json')
+
+            else:
+
+                return HttpResponse('none', content_type='text/plain')
 
         Invoices = Invoice.objects.all().order_by().values()
 
