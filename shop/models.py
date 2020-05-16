@@ -1,7 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
-class User(models.Model):
+class UserAdditionalInfo(models.Model):
     user_id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255)

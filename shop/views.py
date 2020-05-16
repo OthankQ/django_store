@@ -1,7 +1,9 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import User, Item, Invoice, LineItem
+from .models import UserAdditionalInfo, Item, Invoice, LineItem
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 import json
 
 
@@ -26,20 +28,22 @@ def GetPostUser(request):
     if request.method == 'GET':
 
         # When query string exists
-        if request.GET.get('id'):
+        if request.GET.get('username'):
 
             # Extract the parameter and save it to requested_id
-            requested_id = request.GET.get('id')
-
+            requested_username = request.GET.get('username')
+            print(requested_username)
+            print(type(requested_username))
             # Query for the row that matches the criteria
-            requested_user = User.objects.filter(
-                user_id=requested_id).values()
-
-            if len(requested_user) > 0:
+            requested_user = User.objects.get(
+                username=requested_username)
+            print(requested_user)
+            print(requested_user.id)
+            if requested_user:
 
                 # Create a dict with the values retrieved from the queried data point
-                data = {'user_id': requested_user[0]['user_id'],
-                        'name': requested_user[0]['name'], 'phone': requested_user[0]['phone_number']}
+                data = {'id': requested_user.id,
+                        'username': requested_user.username, 'date_joined': str(requested_user.date_joined), 'last_login': str(requested_user.last_login)}
 
                 # Convet the data to transferable json
                 data = json.dumps(data)
@@ -68,22 +72,37 @@ def GetPostUser(request):
         # Return the queried and converted data
         return HttpResponse(data, content_type='application/json')
 
+    # Registration
+
     elif request.method == 'POST':
 
         data = json.loads(request.body)
-        user_id = data['user_id']
-        user_name = data['user_name']
-        phone = data['phone_number']
+
+        username = data['username']
+        email = data['email']
         password = data['password']
 
-        parsed_data = User(
-            user_id=user_id, name=user_name, password=password, phone_number=phone)
+        new_user = User.objects.create_user(username, email, password)
+        new_user.save()
 
-        parsed_data.save()
-
-        print('User has been added successfully')
+        print('User has been registered successfully')
 
         return HttpResponse('success', content_type='text/plain')
+
+
+def UserLogin(request):
+
+    data = json.loads(request.body)
+
+    username = data['username']
+    password = data['password']
+
+    user = authenticate(username=username, password=password)
+
+    if user is not None:
+        return HttpResponse('success', content_type='text/plain')
+    else:
+        return HttpResponse('none', content_type='text/plain')
 
 
 def GetPostItem(request):
