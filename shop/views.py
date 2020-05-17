@@ -26,6 +26,7 @@ def UpdateLineItemPrice(quantity, item_id):
 
 def GetPostUser(request):
     if request.method == 'GET':
+        print(request.session)
 
         # When query string exists
         if request.GET.get('username'):
@@ -107,12 +108,14 @@ def GetPostUser(request):
 
 def UserLogin(request):
 
-    # data = json.loads(request.body)
+    data = json.loads(request.body)
 
-    username = request.POST['username']
-    password = request.POST['password']
+    # print(request.POST['username'])
 
-    user = authenticate(username=username, password=password)
+    username = data['username']
+    password = data['password']
+
+    user = authenticate(request, username=username, password=password)
 
     if user is not None:
 
