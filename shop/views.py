@@ -9,10 +9,7 @@ import json
 
 def UpdateLineItemPrice(quantity, item_id):
     # query for that specific line item using item_id
-    # print('up to here')
-    # print(item_id)
     item = Item.objects.filter(item_id=item_id).values()
-    # print(item)
 
     # query for current item price of that item and store it in a variable
     current_item_price = item[0]['price']
@@ -33,13 +30,11 @@ def GetUserInfo(request):
 
             # Extract the parameter and save it to requested_id
             requested_username = request.GET.get('username')
-            # print(requested_username)
-            # print(type(requested_username))
+
             # Query for the row that matches the criteria
             requested_user = User.objects.get(
                 username=requested_username)
-            # print(requested_user)
-            # print(requested_user.id)
+
             if requested_user:
 
                 # Create a dict with the values retrieved from the queried data point
@@ -111,8 +106,6 @@ def UserLogin(request):
     try:
         data = json.loads(request.body)
 
-        # print(request.POST['username'])
-
         username = data['username']
         password = data['password']
 
@@ -128,15 +121,17 @@ def UserLogin(request):
         else:
             return HttpResponse('none', content_type='text/plain')
     except(KeyError):
-        print("Key error fuckers")
-        return HttpResponse('-2', content_type='text/plain')
+        print("Key error")
+        return HttpResponse('none', content_type='text/plain')
 
 
+# User Logout
 def UserLogout(request):
     logout(request)
     return HttpResponse('success', content_type='text/plain')
 
 
+# Retrieve or add Item data
 def GetPostItem(request):
 
     if request.method == 'GET':
@@ -208,6 +203,7 @@ def GetPostItem(request):
         return HttpResponse('success', content_type='text/plain')
 
 
+# Retreive or add invoice data
 def GetPostInvoice(request):
     if request.method == 'GET':
         # BLAIR CODE!!!
@@ -227,7 +223,7 @@ def GetPostInvoice(request):
             return HttpResponse(invoice_json, content_type='application/json')
 
         else:
-
+            # User is not logged in
             return HttpResponse('none', content_type='text/plain')
 
         # When there is a specified query string
@@ -246,7 +242,7 @@ def GetPostInvoice(request):
                     data = {'invoice_id': invoice.invoice_id,
                             'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
 
-                    # Convet the data to transferable json
+                    # Convert the data to transferable json
                     # data = json.dumps(data)
 
                     invoice_array.append(data)
@@ -277,91 +273,108 @@ def GetPostInvoice(request):
 
     elif request.method == 'POST':
 
-        data = json.loads(request.body)
-        invoice_id = data['invoice_id']
-        user_id = data['user_id']
-        date = data['date']
-        status = data['status']
+        try:
+            data = json.loads(request.body)
+            invoice_id = data['invoice_id']
+            user_id = data['user_id']
+            date = data['date']
+            status = data['status']
 
-        parsed_data = Invoice(
-            invoice_id=invoice_id, user_id=user_id, date=date, status=status)
+            parsed_data = Invoice(
+                invoice_id=invoice_id, user_id=user_id, date=date, status=status)
 
-        parsed_data.save()
+            parsed_data.save()
 
-        print('Invoice has been added successfully')
+            print('Invoice has been added successfully')
 
-        return HttpResponse('success', content_type='text/plain')
+            return HttpResponse('success', content_type='text/plain')
+
+        except(KeyError):
+            print("Key error")
+            return HttpResponse('none', content_type='text/plain')
 
 
+# Retrieve or add lineitem data
 def GetPostLineItem(request):
 
     if request.method == 'GET':
 
-        LineItems = LineItem.objects.all().order_by().values()
+        try:
 
-        data = [None] * len(LineItems)
+            LineItems = LineItem.objects.all().order_by().values()
 
-        for i in range(0, len(LineItems)):
+            data = [None] * len(LineItems)
 
-            data[i] = {'line_item_id': LineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]
-                       ['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
+            for i in range(0, len(LineItems)):
 
-        data = json.dumps(data)
+                data[i] = {'line_item_id': LineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]
+                           ['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
 
-        print('Successfully fetched line items')
+            data = json.dumps(data)
 
-        return HttpResponse(data, content_type='application/json')
+            print('Successfully fetched line items')
+
+            return HttpResponse(data, content_type='application/json')
+
+        except:
+
+            return HttpResponse("none", content_type='text/plain')
 
     elif request.method == 'POST':
 
-        # Retrieve data from user request
+        try:
+            # Retrieve data from user request
 
-        data = json.loads(request.body)
+            data = json.loads(request.body)
 
-        # Check if there is already an entry with  line_item_id of the data sent by the user
-        # If there is already one, query for that data
+            # Check if there is already an entry with  line_item_id of the data sent by the user
+            # If there is already one, query for that data
 
-        # Cart
+            # Cart
 
-        original_entry = LineItem.objects.filter(
-            item_id=data['item_id']).values()
+            original_entry = LineItem.objects.filter(
+                item_id=data['item_id']).values()
 
-        # Update
-        if len(original_entry) > 0:
+            # Update
+            if len(original_entry) > 0:
 
-            indexable_original_entry = list(original_entry)[0]
+                indexable_original_entry = list(original_entry)[0]
 
-            if 'quantity' in data.keys():
+                if 'quantity' in data.keys():
 
-                indexable_original_entry['quantity'] = data['quantity']
+                    indexable_original_entry['quantity'] = data['quantity']
 
-            line_item = indexable_original_entry['line_item']
-            quantity = indexable_original_entry['quantity']
-            item_id = indexable_original_entry['item_id']
-            invoice_id = indexable_original_entry['invoice_id']
+                line_item = indexable_original_entry['line_item']
+                quantity = indexable_original_entry['quantity']
+                item_id = indexable_original_entry['item_id']
+                invoice_id = indexable_original_entry['invoice_id']
 
-            line_item_price = UpdateLineItemPrice(quantity, item_id)
+                line_item_price = UpdateLineItemPrice(quantity, item_id)
 
-            parsed_data = LineItem(
-                line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+                parsed_data = LineItem(
+                    line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
-        # Post
+            # Post
 
-        # There is no line_item with the same line_item_id
+            # There is no line_item with the same line_item_id
 
-        else:
-            invoice_id = data['invoice_id']
-            # line_item_id = data['line_item_id']
-            item_id = data['item_id']
-            quantity = data['quantity']
+            else:
+                invoice_id = data['invoice_id']
+                # line_item_id = data['line_item_id']
+                item_id = data['item_id']
+                quantity = data['quantity']
 
-            line_item_price = UpdateLineItemPrice(quantity, item_id)
+                line_item_price = UpdateLineItemPrice(quantity, item_id)
 
-            parsed_data = LineItem(
-                invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+                parsed_data = LineItem(
+                    invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
-        parsed_data.save()
+            parsed_data.save()
 
-        print('LineItem has been added successfully')
+            print('LineItem has been added successfully')
 
-        return HttpResponse('success', content_type='text/plain')
+            return HttpResponse('success', content_type='text/plain')
+
+        except(KeyError):
+            print("Key error")
+            return HttpResponse('none', content_type='text/plain')
