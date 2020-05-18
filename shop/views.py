@@ -24,7 +24,7 @@ def UpdateLineItemPrice(quantity, item_id):
     return calculated_line_item_price
 
 
-def GetPostUser(request):
+def GetUserInfo(request):
     if request.method == 'GET':
         print(request.session)
 
@@ -75,35 +75,36 @@ def GetPostUser(request):
 
     # Registration
 
-    elif request.method == 'POST':
 
-        data = json.loads(request.body)
+def RegisterUser(request):
 
-        username = data['username']
-        email = data['email']
-        password = data['password']
+    data = json.loads(request.body)
 
-        new_user = User.objects.create_user(username, email, password)
-        new_user.save()
+    username = data['username']
+    email = data['email']
+    password = data['password']
 
-        print('User has been registered successfully')
+    new_user = User.objects.create_user(username, email, password)
+    new_user.save()
 
-        # Create Cart
+    print('User has been registered successfully')
 
-        # Query for the id of the just created user's id number
-        new_user_value = User.objects.filter(username=username).values()
-        new_user_id = new_user_value[0]['id']
-        new_user_registered_time = new_user_value[0]['date_joined']
+    # Create Cart
 
-        new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
+    # Query for the id of the just created user's id number
+    new_user_value = User.objects.filter(username=username).values()
+    new_user_id = new_user_value[0]['id']
+    new_user_registered_time = new_user_value[0]['date_joined']
 
-        # Use that id number to create new invoice(cart)
-        new_cart = Invoice(user=new_user, status=new_cart_status,
-                           date=new_user_registered_time)
+    new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
 
-        new_cart.save()
+    # Use that id number to create new invoice(cart)
+    new_cart = Invoice(user=new_user, status=new_cart_status,
+                       date=new_user_registered_time)
 
-        return HttpResponse('success', content_type='text/plain')
+    new_cart.save()
+
+    return HttpResponse('success', content_type='text/plain')
 
 
 def UserLogin(request):
