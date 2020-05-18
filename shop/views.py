@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 import json
 
 
@@ -131,6 +131,11 @@ def UserLogin(request):
         return HttpResponse('-2', content_type='text/plain')
 
 
+def UserLogout(request):
+    logout(request)
+    return HttpResponse('success', content_type='text/plain')
+
+
 def GetPostItem(request):
 
     if request.method == 'GET':
@@ -206,18 +211,23 @@ def GetPostInvoice(request):
     if request.method == 'GET':
         # BLAIR CODE!!!
         if request.user.is_authenticated:
-            # this dude is logged in
+            # Check if this dude is logged in
             requested_invoices = Invoice.objects.filter(
                 user_id=request.user.id)
+            # Query for all the invoice under this user's id
             invoice_array = list()
             for invoice in requested_invoices:
                 data = {'invoice_id': invoice.invoice_id,
                         'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
-                # Convet the data to transferable json
+                # Convert the data to transferable json
                 # data = json.dumps(data)
                 invoice_array.append(data)
             invoice_json = json.dumps(invoice_array)
             return HttpResponse(invoice_json, content_type='application/json')
+
+        else:
+
+            return HttpResponse('none', content_type='text/plain')
 
         # When there is a specified query string
         if request.GET.get('id'):
