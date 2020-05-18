@@ -107,25 +107,28 @@ def GetPostUser(request):
 
 
 def UserLogin(request):
+    try:
+        data = json.loads(request.body)
 
-    data = json.loads(request.body)
+        # print(request.POST['username'])
 
-    # print(request.POST['username'])
+        username = data['username']
+        password = data['password']
 
-    username = data['username']
-    password = data['password']
+        user = authenticate(request, username=username, password=password)
 
-    user = authenticate(request, username=username, password=password)
+        if user is not None:
 
-    if user is not None:
+            # Save user info to session
 
-        # Save user info to session
+            login(request, user)
+            return HttpResponse('success', content_type='text/plain')
 
-        login(request, user)
-        return HttpResponse('success', content_type='text/plain')
-
-    else:
-        return HttpResponse('none', content_type='text/plain')
+        else:
+            return HttpResponse('none', content_type='text/plain')
+    except(KeyError):
+        print("Key error fuckers")
+        return HttpResponse('-2', content_type='text/plain')
 
 
 def GetPostItem(request):
@@ -201,10 +204,23 @@ def GetPostItem(request):
 
 def GetPostInvoice(request):
     if request.method == 'GET':
+        # BLAIR CODE!!!
+        if request.user.is_authenticated:
+            # this dude is logged in
+            requested_invoices = Invoice.objects.filter(
+                user_id=request.user.id)
+            invoice_array = list()
+            for invoice in requested_invoices:
+                data = {'invoice_id': invoice.invoice_id,
+                        'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
+                # Convet the data to transferable json
+                # data = json.dumps(data)
+                invoice_array.append(data)
+            invoice_json = json.dumps(invoice_array)
+            return HttpResponse(invoice_json, content_type='application/json')
 
         # When there is a specified query string
         if request.GET.get('id'):
-
             requested_user_id = request.GET.get('id')
             requested_invoices = Invoice.objects.filter(
                 user_id=requested_user_id)
