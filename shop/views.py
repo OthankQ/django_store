@@ -136,6 +136,63 @@ def GetPostItem(request):
 
     if request.method == 'GET':
 
+        # If user is searching based on users
+        if request.GET.get('user_id'):
+
+            requested_user_id = request.GET.get('user_id')
+
+            Items = list(Item.objects.filter(
+                user_id=requested_user_id).values())
+
+            try:
+
+                if Items:
+
+                    data = [None] * len(Items)
+
+                    for i in range(0, len(Items)):
+
+                        data[i] = {'item_id': Items[i]['item_id'], 'item_name': Items[i]['name'], 'price':
+                                   str(Items[i]['price']), 'stock': Items[i]['stock']}
+
+                    print(data)
+
+                    data = json.dumps(data)
+
+                    return HttpResponse(data, content_type='text/plain')
+
+            except(KeyError):
+
+                return HttpResponse('-1', content_type='text/plain')
+
+        # If a user is searching with item name:
+        elif request.GET.get('item_id'):
+
+            requested_item_id = request.GET.get('item_id')
+            Items = list(Item.objects.filter(
+                item_id=requested_item_id).values())
+
+            try:
+
+                if Items:
+
+                    data = [None] * len(Items)
+
+                    for i in range(0, len(Items)):
+
+                        data[i] = {'item_id': Items[i]['item_id'], 'item_name': Items[i]['name'], 'price':
+                                   str(Items[i]['price']), 'stock': Items[i]['stock']}
+
+                    print(data)
+
+                    data = json.dumps(data)
+
+                    return HttpResponse(data, content_type='text/plain')
+
+            except(KeyError):
+
+                return HttpResponse('-1', content_type='text/plain')
+
         Items = Item.objects.order_by().values()
 
         data = [None] * len(Items)

@@ -15,6 +15,7 @@ class UserAdditionalInfo(models.Model):
 
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     desc = models.CharField(max_length=255, blank=True)
     price = models.DecimalField(max_digits=7, decimal_places=2)
