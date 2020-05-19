@@ -26,8 +26,8 @@ class Item(models.Model):
 
 
 class InvoiceStatus(models.Model):
-    INVOICE_STATUS = (('cart', 'cart'), ('pending', 'pending'),
-                      ('shipped', 'shipped'), ('fulfilled', 'fulfilled'))
+    INVOICE_STATUS = (('cart', 'cart'), ('paid', 'paid'),
+                      ('completed', 'completed'))
     status = models.CharField(
         max_length=10, default="cart", choices=INVOICE_STATUS)
 
@@ -49,6 +49,16 @@ class Invoice(models.Model):
         return str(self.invoice_id)
 
 
+class LineItemStatus(models.Model):
+    LINE_ITEM_STATUS = (('in cart', 'in cart'), ('pending', 'pending'),
+                        ('in locker', 'in locker'), ('picked up', 'picked up'))
+    status = models.CharField(
+        max_length=10, default="in cart", choices=LINE_ITEM_STATUS)
+
+    def __str__(self):
+        return self.status
+
+
 class LineItem(models.Model):
     line_item = models.AutoField(primary_key=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
@@ -57,6 +67,7 @@ class LineItem(models.Model):
     line_item_price = models.DecimalField(
         max_digits=7, decimal_places=2, default=0)
     quantity = models.IntegerField(default=0)
+    status = models.ForeignKey(LineItemStatus, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.line_item)

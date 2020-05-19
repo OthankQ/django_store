@@ -49,7 +49,7 @@ def GetUserInfo(request):
 
             else:
 
-                return HttpResponse('none', content_type='text/plain')
+                return HttpResponse('-1', content_type='text/plain')
 
         # Query for all Users
         Users = User.objects.all().order_by().values()
@@ -99,7 +99,7 @@ def RegisterUser(request):
 
     new_cart.save()
 
-    return HttpResponse('success', content_type='text/plain')
+    return HttpResponse('0', content_type='text/plain')
 
 
 def UserLogin(request):
@@ -116,19 +116,19 @@ def UserLogin(request):
             # Save user info to session
 
             login(request, user)
-            return HttpResponse('success', content_type='text/plain')
+            return HttpResponse('0', content_type='text/plain')
 
         else:
-            return HttpResponse('none', content_type='text/plain')
+            return HttpResponse('-1', content_type='text/plain')
     except(KeyError):
         print("Key error")
-        return HttpResponse('none', content_type='text/plain')
+        return HttpResponse('-1', content_type='text/plain')
 
 
 # User Logout
 def UserLogout(request):
     logout(request)
-    return HttpResponse('success', content_type='text/plain')
+    return HttpResponse('0', content_type='text/plain')
 
 
 # Retrieve or add Item data
@@ -200,7 +200,7 @@ def GetPostItem(request):
 
         print('Item has been added successfully')
 
-        return HttpResponse('success', content_type='text/plain')
+        return HttpResponse('0', content_type='text/plain')
 
 
 # Retreive or add invoice data
@@ -224,7 +224,7 @@ def GetPostInvoice(request):
 
         else:
             # User is not logged in
-            return HttpResponse('none', content_type='text/plain')
+            return HttpResponse('-1', content_type='text/plain')
 
         # When there is a specified query string
         if request.GET.get('id'):
@@ -255,7 +255,7 @@ def GetPostInvoice(request):
 
             else:
 
-                return HttpResponse('none', content_type='text/plain')
+                return HttpResponse('-1', content_type='text/plain')
 
         Invoices = Invoice.objects.all().order_by().values()
 
@@ -287,11 +287,11 @@ def GetPostInvoice(request):
 
             print('Invoice has been added successfully')
 
-            return HttpResponse('success', content_type='text/plain')
+            return HttpResponse('0', content_type='text/plain')
 
         except(KeyError):
             print("Key error")
-            return HttpResponse('none', content_type='text/plain')
+            return HttpResponse('-1', content_type='text/plain')
 
 
 # Retrieve or add lineitem data
@@ -318,7 +318,7 @@ def GetPostLineItem(request):
 
         except:
 
-            return HttpResponse("none", content_type='text/plain')
+            return HttpResponse('-1', content_type='text/plain')
 
     elif request.method == 'POST':
 
@@ -373,8 +373,8 @@ def GetPostLineItem(request):
 
             print('LineItem has been added successfully')
 
-            return HttpResponse('success', content_type='text/plain')
+            return HttpResponse('0', content_type='text/plain')
 
         except(KeyError):
             print("Key error")
-            return HttpResponse('none', content_type='text/plain')
+            return HttpResponse('-1', content_type='text/plain')
