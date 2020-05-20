@@ -208,6 +208,10 @@ def GetPostItem(request):
 
     elif request.method == 'POST':
 
+        if not request.user.is_authenticated:
+
+            return HttpResponse('-1', content_type='text/plain')
+
         # Parse in the data sent by user
         data = json.loads(request.body)
 
@@ -236,15 +240,17 @@ def GetPostItem(request):
             name = indexable_original_entry['name']
             item_id = indexable_original_entry['item_id']
             price = indexable_original_entry['price']
+            user_id = request.user.id
 
             parsed_data = Item(
-                item_id=item_id, stock=stock, name=name, price=price)
+                item_id=item_id, stock=stock, name=name, price=price, user_id=user_id)
 
         # Post
         else:
 
             item_id = data['item_id']
             name = data['name']
+            user_id = request.user.id
             # desc = data['desc']
             price = data['price']
             # image_id = data['image_id']
