@@ -358,19 +358,28 @@ def GetPostInvoice(request):
 
 
 # Retrieve or add lineitem data
-def GetPostLineItem(request):
+def GetPostCart(request):
+
+    if not request.user.is_authenticated:
+
+        return HttpResponse('-1', content_type='text/plain')
 
     if request.method == 'GET':
 
         try:
 
-            LineItems = LineItem.objects.all().order_by().values()
+            # Query for the 'cart' status invoice
+            cart = Invoice.objects.filter(
+                status_id=1, user_id=request.user.id).values()
+            # print(cart)
 
-            data = [None] * len(LineItems)
+            lineItems = LineItem.objects.all().order_by().values()
 
-            for i in range(0, len(LineItems)):
+            data = [None] * len(lineItems)
 
-                data[i] = {'line_item_id': LineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]
+            for i in range(0, len(lineItems)):
+
+                data[i] = {'line_item_id': lineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]
                            ['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
 
             data = json.dumps(data)
@@ -439,5 +448,5 @@ def GetPostLineItem(request):
             return HttpResponse('0', content_type='text/plain')
 
         except(KeyError):
-            print("Key error")
+
             return HttpResponse('-1', content_type='text/plain')

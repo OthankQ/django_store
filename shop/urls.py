@@ -1,7 +1,7 @@
 # from rest_framework import routers
 # from .api import UserViewSet, ItemViewSet
 from django.urls import path, include
-from .views import GetUserInfo, RegisterUser, UserLogin, UserLogout, GetPostItem, GetPostInvoice, GetPostLineItem
+from .views import GetUserInfo, RegisterUser, UserLogin, UserLogout, GetPostItem, GetPostInvoice, GetPostCart
 
 urlpatterns = [
     path('user/info/', GetUserInfo, name='user'),
@@ -10,7 +10,7 @@ urlpatterns = [
     path('logout/', UserLogout, name='logout'),
     path('item/', GetPostItem, name='item'),
     path('invoice/', GetPostInvoice, name='invoice'),
-    path('lineitem/', GetPostLineItem, name='line_item')
+    path('cart/', GetPostCart, name='line_item')
 ]
 
 
