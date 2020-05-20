@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from datetime import datetime
 import json
 
 
@@ -431,15 +432,21 @@ def GetPostCart(request):
             # There is no line_item with the same line_item_id
 
             else:
-                invoice_id = data['invoice_id']
+
+                # Query for this user's cart
+
+                cart = Invoice.objects.filter(
+                    status_id=1, user_id=request.user.id).values()[0]
+
+                invoice_id = cart['invoice_id']
                 # line_item_id = data['line_item_id']
                 item_id = data['item_id']
                 quantity = data['quantity']
 
                 line_item_price = UpdateLineItemPrice(quantity, item_id)
 
-                parsed_data = LineItem(
-                    invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+                parsed_data = LineItem(status_id=1,
+                                       invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
             parsed_data.save()
 
@@ -449,4 +456,58 @@ def GetPostCart(request):
 
         except(KeyError):
 
+            print("There was a key error")
             return HttpResponse('-1', content_type='text/plain')
+
+
+def SubmitCart(request):
+
+    # Check if a user is logged in
+    if not request.user.is_authenticated:
+
+        return HttpResponse('-1', content_type='text/plain')
+
+    # Query for the invoice with status of cart(1) and switch the status to paid(2)
+
+    cart = Invoice.objects.filter(
+        status_id=1, user_id=request.user.id).values()[0]
+
+    current_cart_id = Invoice.objects.filter(
+        status_id=1, user_id=request.user.id).values()[0]['invoice_id']
+    print(current_cart_id)
+    submitted_cart = Invoice(
+        date=cart['date'], invoice_id=cart['invoice_id'], status_id=2, user_id=request.user.id)
+
+    submitted_cart.save()
+
+    # Query and change the status for every line item that was in the cart to 2
+
+    # current_cart_id = Invoice.objects.filter(
+    #     status_id=1, user_id=request.user.id).values()
+
+    line_items_in_cart = LineItem.objects.filter(
+        invoice=current_cart_id).values()
+
+    print(line_items_in_cart)
+    for item in line_items_in_cart:
+
+        line_item_id = item['line_item']
+        line_item_price = item['line_item_price']
+        quantity = item['quantity']
+        invoice_id = item['invoice_id']
+        item_id = item['item_id']
+        status_id = item['status_id']
+
+        submitted_item = LineItem(line_item=line_item_id, line_item_price=line_item_price,
+                                  quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=2)
+
+        submitted_item.save()
+
+    # Create a new cart under this user's user_id
+
+    new_cart = Invoice(user=request.user, status_id=1,
+                       date=datetime.now())
+
+    new_cart.save()
+
+    return HttpResponse('0', content_type='text/plain')
