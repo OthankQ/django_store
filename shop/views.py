@@ -482,9 +482,6 @@ def SubmitCart(request):
 
     # Query and change the status for every line item that was in the cart to 2
 
-    # current_cart_id = Invoice.objects.filter(
-    #     status_id=1, user_id=request.user.id).values()
-
     line_items_in_cart = LineItem.objects.filter(
         invoice=current_cart_id).values()
 

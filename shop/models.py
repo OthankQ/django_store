@@ -3,10 +3,11 @@ from django.contrib.auth.models import User
 
 
 class UserAdditionalInfo(models.Model):
-    user_id = models.CharField(max_length=255, primary_key=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True)
     password = models.CharField(max_length=255)
     phone_number = models.IntegerField(null=True, blank=True)
+    address = models.CharField(max_length=255, null=True, blank=True)
     # etc = models.CharField(max_length=255)
 
     def __str__(self):
