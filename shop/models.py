@@ -8,7 +8,6 @@ class UserAdditionalInfo(models.Model):
     password = models.CharField(max_length=255)
     phone_number = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
-    # etc = models.CharField(max_length=255)
 
     def __str__(self):
         return self.user_id
@@ -45,8 +44,6 @@ class Invoice(models.Model):
     # status = models.CharField(max_length=10, default="cart", choices=INVOICE_STATUS)
     status = models.ForeignKey(InvoiceStatus, on_delete=models.CASCADE)
 
-    # etc = models.CharField(max_length=255)
-
     def __str__(self):
         return str(self.invoice_id)
 
@@ -74,3 +71,24 @@ class LineItem(models.Model):
 
     def __str__(self):
         return str(self.line_item)
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    read = models.BooleanField(default=False)
+    cleared = models.BooleanField(default=False)
+    notification_body = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.notification_body
+
+
+class Messages(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    line_item = models.ForeignKey(LineItem, on_delete=models.CASCADE)
+    message_body = models.CharField(max_length=255)
+    date_created = models.DateTimeField('message creation date')
+    image_id = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return self.message_body
