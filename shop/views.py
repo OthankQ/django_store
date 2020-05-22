@@ -467,27 +467,17 @@ def SubmitCart(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
-    # Query for the invoice with status of cart(1) and switch the status to paid(2)
-
-    cart = Invoice.objects.filter(
-        status_id=1, user_id=request.user.id).values()[0]
-
-    current_cart_id = Invoice.objects.filter(
-        status_id=1, user_id=request.user.id).values()[0]['invoice_id']
-
-    submitted_cart = Invoice(
-        date=cart['date'], invoice_id=cart['invoice_id'], status_id=2, user_id=request.user.id)
-
-    submitted_cart.save()
-
     # Query and check if there are more item stocks than requested quantity of the line item
 
     # Query and change the status for every line item that was in the cart to 2
 
+    # Get the id of current cart
+    current_cart_id = Invoice.objects.filter(
+        status_id=1, user_id=request.user.id).values()[0]['invoice_id']
+
     line_items_in_cart = LineItem.objects.filter(
         invoice=current_cart_id).values()
 
-    print(line_items_in_cart)
     for line_item in line_items_in_cart:
 
         # Query for the item of the line_item
@@ -515,6 +505,16 @@ def SubmitCart(request):
                                   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
         submitted_item.save()
+
+     # Query for the invoice with status of cart(1) and switch the status to paid(2)
+
+    cart = Invoice.objects.filter(
+        status_id=1, user_id=request.user.id).values()[0]
+
+    submitted_cart = Invoice(
+        date=cart['date'], invoice_id=cart['invoice_id'], status_id=2, user_id=request.user.id)
+
+    submitted_cart.save()
 
     # Create a new cart under this user's user_id
 
@@ -630,6 +630,7 @@ def PickUpItem(request):
         user=request.user.id).values()[0]['user']
 
     # If the requested item's buyer is not the same as user, exit with -1
+    # I imagine this part of the code is where it will be decided whether the buyer will be able to open the locker door or not
 
     if not line_item_buyer_id == request.user.id:
 
