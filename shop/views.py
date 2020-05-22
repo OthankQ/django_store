@@ -380,8 +380,8 @@ def GetPostCart(request):
 
             for i in range(0, len(lineItems)):
 
-                data[i] = {'line_item_id': lineItems[i]['line_item'], 'invoice_id': LineItems[i]['invoice_id'], 'item_id': LineItems[i]
-                           ['item_id'], 'line_item_price': float(LineItems[i]['line_item_price']), 'quantity': LineItems[i]['quantity']}
+                data[i] = {'line_item_id': lineItems[i]['line_item'], 'invoice_id': lineItems[i]['invoice_id'], 'item_id': lineItems[i]
+                           ['item_id'], 'line_item_price': float(lineItems[i]['line_item_price']), 'quantity': lineItems[i]['quantity']}
 
             data = json.dumps(data)
 
@@ -474,11 +474,13 @@ def SubmitCart(request):
 
     current_cart_id = Invoice.objects.filter(
         status_id=1, user_id=request.user.id).values()[0]['invoice_id']
-    print(current_cart_id)
+
     submitted_cart = Invoice(
         date=cart['date'], invoice_id=cart['invoice_id'], status_id=2, user_id=request.user.id)
 
     submitted_cart.save()
+
+    # Query and check if there are more item stocks than requested quantity of the line item
 
     # Query and change the status for every line item that was in the cart to 2
 
@@ -486,17 +488,31 @@ def SubmitCart(request):
         invoice=current_cart_id).values()
 
     print(line_items_in_cart)
-    for item in line_items_in_cart:
+    for line_item in line_items_in_cart:
 
-        line_item_id = item['line_item']
-        line_item_price = item['line_item_price']
-        quantity = item['quantity']
-        invoice_id = item['invoice_id']
-        item_id = item['item_id']
-        status_id = item['status_id']
+        # Query for the item of the line_item
+        item_id = line_item['item_id']
+        quantity = line_item['quantity']
+
+        item_stock = Item.objects.filter(item_id).values()[0]['stock']
+        # If there are more stocks than requested quantity, go through with changing the status
+
+        # If there are fewer stocks than requested quantity, stop the whole process of updating the line_item status, return -1 with a notification to the user
+        if item_stock < quantity:
+
+            # Create and save notification item for this user
+
+            return HttpResponse('-1', content_type='text/plain')
+
+        line_item_id = line_item['line_item']
+        line_item_price = line_item['line_item_price']
+        # quantity = line_item['quantity']
+        invoice_id = line_item['invoice_id']
+        # item_id = line_item['item_id']
+        status_id = 2
 
         submitted_item = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-                                  quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=2)
+                                  quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
         submitted_item.save()
 
@@ -506,5 +522,137 @@ def SubmitCart(request):
                        date=datetime.now())
 
     new_cart.save()
+
+    return HttpResponse('0', content_type='text/plain')
+
+
+# Method that is fired when seller puts an item into a locker
+def PutInLocker(request):
+
+    # Check if seller is logged in
+
+    if not request.user.is_authenticated:
+
+        return HttpResponse('-1', content_type='text/plain')
+
+    # line item id will be posted by the seller
+
+    data = json.loads(request.body)
+    line_item = data['line_item']
+
+    # check if the user that is associated with the line_item and the logged in user is the same user
+
+    line_item_seller_id = LineItem.objects.filter(
+        user=request.user.id).values()[0]['user']
+
+    # If the requested item's seller is not the same as user, exit with -1
+
+    if not line_item_seller_id == request.user.id:
+
+        return HttpResponse('-1', cotent_type='text/plain')
+
+    # With the line item id, query for the line item and change its status from 2 to 3
+
+    line_item = LineItem.objects.filter(line_item=line_item).values()
+
+    line_item_id = line_item['line_item']
+    user = line_item['user']
+    line_item_price = line_item['line_item_price']
+    quantity = line_item['quantity']
+    invoice_id = line_item['invoice_id']
+    item_id = line_item['item_id']
+    status_id = 3
+
+    item_put_in_locker = LineItem(line_item=line_item_id, line_item_price=line_item_price,
+                                  quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
+
+    item_put_in_locker.save()
+
+    return HttpResponse('0', content_type='text/plain')
+
+
+# Method to check of other lineitems in that spcific data are all picked up or not
+# This method will be run everytime an order has been picked up by a buyer
+
+def CheckLineItemStatus(invoice_id):
+
+    ready_for_completion = True
+
+    # Query for that invoice this line_item is in
+
+    # invoice = Invoice.objects.filter(invoice_id=invoice_id).values()[0]
+
+    # Using that invoice_id, query all the line_items in that invoice
+
+    other_line_items = LineItem.objects.filter(invoice_id=invoice_id).values()
+
+    # Loop through all the queried line items and see if their statuses are all 3
+
+    for line_item in other_line_items:
+
+        if not line_item['status_id'] == 2:
+
+            ready_for_completion = False
+
+    # If so, switch the status of that invoice to 3
+
+    if ready_for_completion:
+
+        invoice = Invoice.objects.filter(invoice_id=invoice_id).values()[0]
+
+        invoice_id = invoice['invoice_id']
+        date = invoice['date']
+        status_id = 3
+        user_id = invoice['user_id']
+
+        new_status_invoice = Invoice(
+            invoice_id=invoice_id, date=date, status_id=status_id, user_id=user_id)
+
+        new_status_invoice.save()
+
+
+def PickUpItem(request):
+
+    # Check if buyer is logged in
+
+    if not request.user.is_authenticated:
+
+        return HttpResponse('-1', content_type='text/plain')
+
+    # line item id will be posted by the buyer
+
+    data = json.loads(request.body)
+    line_item = data['line_item']
+
+    # check if the user that is associated with the line_item(buyer) and the logged in user is the same user
+
+    line_item_buyer_id = LineItem.objects.filter(
+        user=request.user.id).values()[0]['user']
+
+    # If the requested item's buyer is not the same as user, exit with -1
+
+    if not line_item_buyer_id == request.user.id:
+
+        return HttpResponse('-1', cotent_type='text/plain')
+
+    # With the line item id, query for the line item and change its status from 2 to 3
+
+    line_item = LineItem.objects.filter(line_item=line_item).values()
+
+    line_item_id = line_item['line_item']
+    user = line_item['user']
+    line_item_price = line_item['line_item_price']
+    quantity = line_item['quantity']
+    invoice_id = line_item['invoice_id']
+    item_id = line_item['item_id']
+    status_id = 4
+
+    item_picked_up = LineItem(line_item=line_item_id, line_item_price=line_item_price,
+                              quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
+
+    item_picked_up.save()
+
+    # This is where method that checks if there are other line items in invoice that are incompleted
+    CheckLineItemStatus(invoice_id)
 
     return HttpResponse('0', content_type='text/plain')

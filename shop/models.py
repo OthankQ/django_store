@@ -63,6 +63,7 @@ class LineItemStatus(models.Model):
 
 class LineItem(models.Model):
     line_item = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     # line_item_name = models.CharField(max_length=255)
