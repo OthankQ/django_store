@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from datetime import datetime
@@ -553,20 +553,21 @@ def PutInLocker(request):
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
-    line_item = LineItem.objects.filter(line_item=line_item).values()
+    line_item = LineItem.objects.filter(line_item=line_item).values()[0]
 
-    line_item_id = line_item['line_item']
-    user = line_item['user']
-    line_item_price = line_item['line_item_price']
-    quantity = line_item['quantity']
-    invoice_id = line_item['invoice_id']
-    item_id = line_item['item_id']
-    status_id = 3
+    # line_item_id = line_item['line_item']
+    # user = line_item['user']
+    # line_item_price = line_item['line_item_price']
+    # quantity = line_item['quantity']
+    # invoice_id = line_item['invoice_id']
+    # item_id = line_item['item_id']
+    # status_id = 3a
+    line_item['status_id'] = LineItemStatus.objects.filter(id=3)[0]
 
-    item_put_in_locker = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-                                  quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
+    # item_put_in_locker = LineItem(line_item=line_item_id, line_item_price=line_item_price,
+                                #   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
-    item_put_in_locker.save()
+    line_item.save()
 
     return HttpResponse('0', content_type='text/plain')
 
