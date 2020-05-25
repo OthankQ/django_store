@@ -379,10 +379,11 @@ def GetPostCart(request):
             cart_status = InvoiceStatus.objects.filter(id=1).values()[0]
 
             cart = Invoice.objects.filter(
-                status_id=cart_status, user_id=request.user.id).values()
+                status_id=cart_status, user_id=request.user.id).values()[0]
             # print(cart)
 
-            lineItems = LineItem.objects.all().order_by().values()
+            lineItems = LineItem.objects.filter(
+                invoice_id=cart['invoice_id']).values()
 
             data = [None] * len(lineItems)
 
