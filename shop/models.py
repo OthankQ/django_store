@@ -76,7 +76,7 @@ class LineItem(models.Model):
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     read = models.BooleanField(default=False)
-    cleared = models.BooleanField(default=False)
+    # cleared = models.BooleanField(default=False)
     notification_body = models.CharField(max_length=255)
 
     def __str__(self):

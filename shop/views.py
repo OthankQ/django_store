@@ -389,7 +389,7 @@ def GetPostCart(request):
 
             return HttpResponse(data, content_type='application/json')
 
-        except:
+        except(KeyError):
 
             return HttpResponse('-1', content_type='text/plain')
 
@@ -565,7 +565,7 @@ def PutInLocker(request):
     line_item['status_id'] = LineItemStatus.objects.filter(id=3)[0]
 
     # item_put_in_locker = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-                                #   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
+    #   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
     line_item.save()
 
