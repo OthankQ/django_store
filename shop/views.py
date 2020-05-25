@@ -370,7 +370,7 @@ def QueryCart(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
-    current_cart = Invoice.objects.filter(user_id=request.user.id).values().[0]
+    current_cart = Invoice.objects.filter(user_id=request.user.id).values()[0]
 
     return current_cart
 
@@ -502,21 +502,29 @@ def SubmitCart(request):
     line_items_in_cart = LineItem.objects.filter(
         invoice=current_cart_id).values()
 
+    # Do stock check first here and return -1 error if stock is less than quantity
+    for line_item in line_items_in_cart:
+        item_id = line_item['item_id']
+        quantity = line_item['quantity']
+
+        item_stock = Item.objects.filter(item_id).values()[0]['stock']
+
+        if item_stock < quantity:
+
+            # Create and save notification item for this user
+
+            return HttpResponse('-1', content_type='text/plain')
+
+    # Change status for lineitem and stocks for item
     for line_item in line_items_in_cart:
 
         # Query for the item of the line_item
         item_id = line_item['item_id']
         quantity = line_item['quantity']
 
-        item_stock = Item.objects.filter(item_id).values()[0]['stock']
+        item = Item.objects.filter(item_id=item_id).values()[0]
+        item_stock = item['stock']
         # If there are more stocks than requested quantity, go through with changing the status
-
-        # If there are fewer stocks than requested quantity, stop the whole process of updating the line_item status, return -1 with a notification to the user
-        if item_stock < quantity:
-
-            # Create and save notification item for this user
-
-            return HttpResponse('-1', content_type='text/plain')
 
         line_item_id = line_item['line_item']
         line_item_price = line_item['line_item_price']
@@ -529,6 +537,10 @@ def SubmitCart(request):
                                   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
         submitted_item.save()
+
+        # update the stock for the item_stock
+        item['stock'] = item_stock - quantity
+        item.save()
 
      # Query for the invoice with status of cart(1) and switch the status to paid(2)
 
