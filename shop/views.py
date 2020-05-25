@@ -559,7 +559,7 @@ def PutInLocker(request):
 
     if not line_item_seller_id == request.user.id:
 
-        return HttpResponse('-1', cotent_type='text/plain')
+        return HttpResponse('-1', content_type='text/plain')
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
