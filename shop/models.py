@@ -67,7 +67,8 @@ class LineItem(models.Model):
     line_item_price = models.DecimalField(
         max_digits=7, decimal_places=2, default=0)
     quantity = models.IntegerField(default=0)
-    status = models.ForeignKey(LineItemStatus, on_delete=models.CASCADE)
+    status = models.ForeignKey(
+        LineItemStatus, on_delete=models.CASCADE)
 
     def __str__(self):
         return str(self.line_item)
