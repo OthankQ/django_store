@@ -364,7 +364,19 @@ def GetPostInvoice(request):
             return HttpResponse('-1', content_type='text/plain')
 
 
+def QueryCart(request):
+
+    if not request.user.is_authenticated:
+
+        return HttpResponse('-1', content_type='text/plain')
+
+    current_cart = Invoice.objects.filter(user_id=request.user.id).values().[0]
+
+    return current_cart
+
 # Retrieve or add lineitem data
+
+
 def GetPostCart(request):
 
     if not request.user.is_authenticated:
@@ -414,8 +426,10 @@ def GetPostCart(request):
 
             # Cart
 
+            current_cart = QueryCart(request)
+
             original_entry = LineItem.objects.filter(
-                item_id=data['item_id']).values()
+                item_id=data['item_id'], invoice_id=current_cart['invoice_id']).values()
 
             # Update
             if len(original_entry) > 0:
