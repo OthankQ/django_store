@@ -76,31 +76,37 @@ def RegisterUser(request):
 
     data = json.loads(request.body)
 
-    username = data['username']
-    email = data['email']
-    password = data['password']
+    try:
 
-    new_user = User.objects.create_user(username, email, password)
-    new_user.save()
+        username = data['username']
+        email = data['email']
+        password = data['password']
 
-    print('User has been registered successfully')
+        new_user = User.objects.create_user(username, email, password)
+        new_user.save()
 
-    # Create Cart
+        print('User has been registered successfully')
 
-    # Query for the id of the just created user's id number
-    new_user_value = User.objects.filter(username=username).values()
-    new_user_id = new_user_value[0]['id']
-    new_user_registered_time = new_user_value[0]['date_joined']
+        # Create Cart
 
-    new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
+        # Query for the id of the just created user's id number
+        new_user_value = User.objects.filter(username=username).values()
+        new_user_id = new_user_value[0]['id']
+        new_user_registered_time = new_user_value[0]['date_joined']
 
-    # Use that id number to create new invoice(cart)
-    new_cart = Invoice(user=new_user, status=new_cart_status,
-                       date=new_user_registered_time)
+        new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
 
-    new_cart.save()
+        # Use that id number to create new invoice(cart)
+        new_cart = Invoice(user=new_user, status=new_cart_status,
+                           date=new_user_registered_time)
 
-    return HttpResponse('0', content_type='text/plain')
+        new_cart.save()
+
+        return HttpResponse('0', content_type='text/plain')
+
+    except(KeyError):
+
+        return HttpResponse('-1', content_type='text/plain')
 
 
 def UserLogin(request):
