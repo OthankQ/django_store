@@ -157,14 +157,14 @@ def GetPostItem(request):
 
             except(KeyError):
 
-                return HttpResponse('-1', content_type='text/plain')
+                return HttpResponse('-6', content_type='text/plain')
 
         # If a user is searching with item name:
         elif request.GET.get('item_id'):
 
             requested_item_id = request.GET.get('item_id')
-            Items = list(Item.objects.filter(
-                item_id=requested_item_id).values())
+            Items = Item.objects.filter(
+                item_id=requested_item_id)
 
             try:
 
@@ -174,10 +174,10 @@ def GetPostItem(request):
 
                     for i in range(0, len(Items)):
 
-                        data[i] = {'item_id': Items[i]['item_id'], 'item_name': Items[i]['name'], 'price':
-                                   str(Items[i]['price']), 'stock': Items[i]['stock']}
+                        data[i] = {'item_id': Items[i].item.id, 'item_name': Items[i].name, 'price':
+                                   str(Items[i].price), 'stock': Items[i].stock}
 
-                    print(data)
+                    # print(data)
 
                     data = json.dumps(data)
 
@@ -185,16 +185,16 @@ def GetPostItem(request):
 
             except(KeyError):
 
-                return HttpResponse('-1', content_type='text/plain')
+                return HttpResponse('-6', content_type='text/plain')
 
-        Items = Item.objects.order_by().values()
+        Items = Item.objects.order_by()
 
         data = [None] * len(Items)
 
         for i in range(0, len(Items)):
 
-            data[i] = {'item_id': Items[i]['item_id'], 'item_name': Items[i]
-                       ['name'], 'price': str(Items[i]['price']), 'stock': Items[i]['stock']}
+            data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i]
+                       .item, 'price': str(Items[i].price), 'stock': Items[i].stock}
 
         data = json.dumps(data)
 
@@ -209,40 +209,41 @@ def GetPostItem(request):
         # Parse in the data sent by user
         data = json.loads(request.body)
 
-        # Check if there are any existing with matching item_id
-        original_entry = Item.objects.filter(
-            item_id=data['item_id']).values()
+        # Check if there are any existing item with matching item_id
+        # original_entry = Item.objects.filter(
+        #     item_id=data['item_id'])[0]
 
+        # If there is item_id within passed data, it is an update
         # Update
-        if len(original_entry) > 0:
-
-            indexable_original_entry = list(original_entry)[0]
+        if 'item_id' in data.keys():
 
             if 'stock' in data.keys():
-                indexable_original_entry['stock'] = data['stock']
+                original_entry.stock = data['stock']
 
             if 'name' in data.keys():
-                indexable_original_entry['name'] = data['name']
+                original_entry.name = data['name']
 
             if 'desc' in data.keys():
-                indexable_original_entry['desc'] = data['desc']
+                original_entry.desc = data['desc']
 
             if 'price' in data.keys():
-                indexable_original_entry['price'] = data['price']
+                original_entry.price = data['price']
 
-            stock = indexable_original_entry['stock']
-            name = indexable_original_entry['name']
-            item_id = indexable_original_entry['item_id']
-            price = indexable_original_entry['price']
-            user_id = request.user.id
+            # stock = indexable_original_entry['stock']
+            # name = indexable_original_entry['name']
+            # item_id = indexable_original_entry['item_id']
+            # price = indexable_original_entry['price']
+            # user_id = request.user.id
 
-            parsed_data = Item(
-                item_id=item_id, stock=stock, name=name, price=price, user_id=user_id)
+            # parsed_data = Item(
+            #     item_id=item_id, stock=stock, name=name, price=price, user_id=user_id)
 
-        # Post
+            original_entry.save()
+
+        # Post new item
         else:
 
-            item_id = data['item_id']
+            # item_id = data['item_id']
             name = data['name']
             user_id = request.user.id
             # desc = data['desc']
@@ -250,12 +251,12 @@ def GetPostItem(request):
             # image_id = data['image_id']
             stock = data['stock']
 
-            parsed_data = Item(
-                item_id=item_id, name=name, price=price, stock=stock)
+            new_item = Item(name=name, price=price,
+                            stock=stock, user_id=user_id)
 
-        parsed_data.save()
+            new_item.save()
 
-        print('Item has been added successfully')
+        print('A New item has been added successfully')
 
         return HttpResponse('0', content_type='text/plain')
 
