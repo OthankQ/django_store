@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from datetime import datetime
@@ -370,7 +370,7 @@ def QueryCart(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
-    current_cart = Invoice.objects.filter(user_id=request.user.id).values()[0]
+    current_cart = Invoice.objects.filter(user_id=request.user.id)[0]
 
     return current_cart
 
@@ -391,22 +391,25 @@ def GetPostCart(request):
             # cart_status = InvoiceStatus.objects.filter(id=1).values()[0]
 
             cart = Invoice.objects.filter(
-                status_id=1, user_id=request.user.id).values()[0]
+                status_id=1, user_id=request.user.id)[0]
             # print(cart)
 
+            print(cart.invoice_id)
+            print(cart)
+
             lineItems = LineItem.objects.filter(
-                invoice_id=cart['invoice_id']).values()
+                invoice_id=cart.invoice_id)
 
             data = [None] * len(lineItems)
 
             for i in range(0, len(lineItems)):
 
-                data[i] = {'line_item_id': lineItems[i]['line_item'], 'invoice_id': lineItems[i]['invoice_id'], 'item_id': lineItems[i]
-                           ['item_id'], 'line_item_price': float(lineItems[i]['line_item_price']), 'quantity': lineItems[i]['quantity']}
+                data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id,
+                           'line_item_price': float(lineItems[i].line_item_price), 'quantity': lineItems[i].quantity, 'status': lineItems[i].status_id}
 
             data = json.dumps(data)
 
-            print('Successfully fetched line items')
+            print('Successfully fetched line items from current cart')
 
             return HttpResponse(data, content_type='application/json')
 
@@ -429,27 +432,28 @@ def GetPostCart(request):
             current_cart = QueryCart(request)
 
             original_entry = LineItem.objects.filter(
-                item_id=data['item_id'], invoice_id=current_cart['invoice_id']).values()
+                item_id=data['item_id'], invoice_id=current_cart.invoice_id)
 
             # Update
             if len(original_entry) > 0:
 
-                indexable_original_entry = list(original_entry)[0]
+                # indexable_original_entry = list(original_entry)[0]
 
                 if 'quantity' in data.keys():
 
-                    indexable_original_entry['quantity'] = data['quantity']
+                    original_entry.quantity = data['quantity']
 
-                line_item = indexable_original_entry['line_item']
-                quantity = indexable_original_entry['quantity']
-                item_id = indexable_original_entry['item_id']
-                invoice_id = indexable_original_entry['invoice_id']
-                status_id = 1
+                # line_item = original_entry.line_item
+                # quantity = original_entry.quantity
+                # item_id = original_entry.item_id
+                # invoice_id = original_entry.invoice_id
+                # status_id = 1
 
-                line_item_price = UpdateLineItemPrice(quantity, item_id)
+                original_entry.line_item_price = UpdateLineItemPrice(
+                    quantity, item_id)
 
-                parsed_data = LineItem(
-                    line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity, status_id=status_id)
+                # parsed_data = LineItem(
+                #     line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity, status_id=status_id)
 
             # Post
 
@@ -460,21 +464,21 @@ def GetPostCart(request):
                 # Query for this user's cart
 
                 cart = Invoice.objects.filter(
-                    status_id=1, user_id=request.user.id).values()[0]
+                    status_id=1, user_id=request.user.id)[0]
 
-                invoice_id = cart['invoice_id']
+                invoice_id = cart.invoice_id
                 # line_item_id = data['line_item_id']
                 item_id = data['item_id']
                 quantity = data['quantity']
 
                 line_item_price = UpdateLineItemPrice(quantity, item_id)
 
-                parsed_data = LineItem(status_id=1,
-                                       invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
+                new_line_item = LineItem(status_id=1,
+                                         invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
-            parsed_data.save()
+            new_line_item.save()
 
-            print('LineItem has been added successfully')
+            print('The lineItem has been added to the cart successfully')
 
             return HttpResponse('0', content_type='text/plain')
 
@@ -504,17 +508,20 @@ def SubmitCart(request):
 
     # Do stock check first here and return -1 error if stock is less than quantity
     for line_item in line_items_in_cart:
+
         item_id = line_item.item_id
         quantity = line_item.quantity
 
-        item_stock = Item.objects.filter(item_id)[0].stock
+        item_stock = Item.objects.filter(item_id=item_id)[0].stock
 
         if item_stock < quantity:
 
             # Create and save notification item for this user
 
             new_notification = Notification(
-                notification_body="There are not enough stocks of this item.")
+                notification_body="There are not enough stocks of this item.", user=request.user)
+
+            new_notification.save()
 
             return HttpResponse('-2', content_type='text/plain')
 
@@ -578,7 +585,7 @@ def PutInLocker(request):
         return HttpResponse('-1', content_type='text/plain')
 
     data = json.loads(request.body)
-    line_item = LineItem.objects.filter(line_item=data['line_item'])
+    line_item = LineItem.objects.filter(line_item=data['line_item'])[0]
 
     # check if the user that is associated with the line_item and the logged in user is the same user
     # Pull the user id from the item object that is associated with this lineitem
@@ -626,14 +633,14 @@ def CheckLineItemStatus(invoice_id):
     # invoice = Invoice.objects.filter(invoice_id=invoice_id).values()[0]
 
     # Using that invoice_id, query all the line_items in that invoice
-
+    # print(invoice_id)
     other_line_items = LineItem.objects.filter(invoice_id=invoice_id)
 
     # Loop through all the queried line items and see if their statuses are all 3
 
     for line_item in other_line_items:
 
-        if not line_item.status_id == 2:
+        if not line_item.status_id == 4:
 
             ready_for_completion = False
 
@@ -641,7 +648,10 @@ def CheckLineItemStatus(invoice_id):
 
     if ready_for_completion:
 
+        # print('it runs till here')
+
         invoice = Invoice.objects.filter(invoice_id=invoice_id)[0]
+        # print(invoice)
 
         # invoice_id = invoice['invoice_id']
         # date = invoice['date']
@@ -685,7 +695,7 @@ def PickUpItem(request):
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
-    line_item = LineItem.objects.filter(line_item=line_item)[0]
+    # line_item = LineItem.objects.filter(line_item=line_item)[0]
 
     # line_item_id = line_item['line_item']
     # user = line_item['user']
@@ -700,7 +710,7 @@ def PickUpItem(request):
 
     line_item.save()
 
-    # This is where method that checks if there are other line items in invoice that are incompleted
-    CheckLineItemStatus(invoice_id)
+    # This is where method that checks if there are other line items in invoice that are incomplete
+    CheckLineItemStatus(invoice.invoice_id)
 
     return HttpResponse('0', content_type='text/plain')
