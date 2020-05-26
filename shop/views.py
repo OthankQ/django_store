@@ -210,12 +210,20 @@ def GetPostItem(request):
         data = json.loads(request.body)
 
         # Check if there are any existing item with matching item_id
-        # original_entry = Item.objects.filter(
-        #     item_id=data['item_id'])[0]
 
         # If there is item_id within passed data, it is an update
         # Update
         if 'item_id' in data.keys():
+
+            original_entry = Item.objects.filter(
+                item_id=data['item_id'])[0]
+
+            # Check if the owner of this item and the logged-in user is the same user_id
+            item_owner_id = original_entry.user_id
+
+            if not item_owner_id == request.user.id:
+
+                return HttpResponse('-3', content_type='text/plain')
 
             if 'stock' in data.keys():
                 original_entry.stock = data['stock']

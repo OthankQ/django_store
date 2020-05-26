@@ -18,7 +18,7 @@ class Item(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     desc = models.CharField(max_length=255, blank=True)
-    price = models.DecimalField(max_digits=7, decimal_places=2)
+    price = models.DecimalField(max_digits=15, decimal_places=2)
     # image_id = models.IntegerField(blank=True, default=0)
     stock = models.IntegerField(default=0)
 
