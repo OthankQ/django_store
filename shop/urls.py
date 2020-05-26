@@ -10,9 +10,9 @@ urlpatterns = [
     path('logout/', UserLogout, name='logout'),
     path('item/', GetPostItem, name='item'),
     path('invoice/', GetPostInvoice, name='invoice'),
-    path('cart/', GetPostCart, name='line_item'),
+    path('cart/', GetPostCart, name='cart'),
     path('submit/', SubmitCart, name='submit'),
-    path('put/', PutInLocker, name='put'),
+    path('dropoff/', PutInLocker, name='dropoff'),
     path('pickup/', PickUpItem, name='pickup')
 ]
 
