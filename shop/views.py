@@ -516,7 +516,7 @@ def SubmitCart(request):
             new_notification = Notification(
                 notification_body="There are not enough stocks of this item.")
 
-            return HttpResponse('no stock', content_type='text/plain')
+            return HttpResponse('-2', content_type='text/plain')
 
     # Change status for lineitem and stocks for item
     for line_item in line_items_in_cart:
@@ -565,7 +565,7 @@ def SubmitCart(request):
 
     new_cart.save()
 
-    return HttpResponse('submit successful', content_type='text/plain')
+    return HttpResponse('0', content_type='text/plain')
 
 
 # Method that is fired when seller puts an item into a locker
@@ -591,7 +591,7 @@ def PutInLocker(request):
 
     if not item_seller_id == request.user.id:
 
-        return HttpResponse('User id does not match with the item seller id', content_type='text/plain')
+        return HttpResponse('-3', content_type='text/plain')
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
@@ -660,7 +660,7 @@ def PickUpItem(request):
 
     if not request.user.is_authenticated:
 
-        return HttpResponse('Login required', content_type='text/plain')
+        return HttpResponse('-1', content_type='text/plain')
 
     # line item id will be posted by the buyer
 
@@ -681,7 +681,7 @@ def PickUpItem(request):
 
     if not item_buyer_id == request.user.id:
 
-        return HttpResponse('User id does not match with buyer id', content_type='text/plain')
+        return HttpResponse('-4', content_type='text/plain')
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
@@ -703,4 +703,4 @@ def PickUpItem(request):
     # This is where method that checks if there are other line items in invoice that are incompleted
     CheckLineItemStatus(invoice_id)
 
-    return HttpResponse('Pickup successful', content_type='text/plain')
+    return HttpResponse('0', content_type='text/plain')
