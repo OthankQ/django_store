@@ -8,20 +8,6 @@ from datetime import datetime
 import json
 
 
-def UpdateLineItemPrice(quantity, item_id):
-    # query for that specific line item using item_id
-    item = Item.objects.filter(item_id=item_id).values()
-
-    # query for current item price of that item and store it in a variable
-    current_item_price = item[0]['price']
-
-    # calculate the total price of the line item and store it in a variable
-    calculated_line_item_price = current_item_price * quantity
-    print(calculated_line_item_price)
-    # Save that price into the existing row
-    return calculated_line_item_price
-
-
 def GetUserInfo(request):
     if request.method == 'GET':
         print(request.session)
@@ -50,7 +36,7 @@ def GetUserInfo(request):
 
             else:
 
-                return HttpResponse('-1', content_type='text/plain')
+                return HttpResponse('-5', content_type='text/plain')
 
         # Query for all Users
         Users = User.objects.all().order_by().values()
@@ -90,14 +76,14 @@ def RegisterUser(request):
         # Create Cart
 
         # Query for the id of the just created user's id number
-        new_user_value = User.objects.filter(username=username).values()
-        new_user_id = new_user_value[0]['id']
-        new_user_registered_time = new_user_value[0]['date_joined']
+        new_user = User.objects.filter(username=username)
+        new_user_id = new_user[0].id
+        new_user_registered_time = new_user[0].date_joined
 
-        new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
+        # new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
 
         # Use that id number to create new invoice(cart)
-        new_cart = Invoice(user=new_user, status=new_cart_status,
+        new_cart = Invoice(user=new_user, status=1,
                            date=new_user_registered_time)
 
         new_cart.save()
@@ -127,6 +113,7 @@ def UserLogin(request):
 
         else:
             return HttpResponse('-1', content_type='text/plain')
+
     except(KeyError):
         print("Key error")
         return HttpResponse('-1', content_type='text/plain')
@@ -148,8 +135,8 @@ def GetPostItem(request):
 
             requested_user_id = request.GET.get('user_id')
 
-            Items = list(Item.objects.filter(
-                user_id=requested_user_id).values())
+            Items = Item.objects.filter(
+                user_id=requested_user_id)
 
             try:
 
@@ -159,8 +146,8 @@ def GetPostItem(request):
 
                     for i in range(0, len(Items)):
 
-                        data[i] = {'item_id': Items[i]['item_id'], 'item_name': Items[i]['name'], 'price':
-                                   str(Items[i]['price']), 'stock': Items[i]['stock']}
+                        data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
+                                   str(Items[i].price), 'stock': Items[i].stock}
 
                     print(data)
 
@@ -327,15 +314,15 @@ def GetPostInvoice(request):
 
                 return HttpResponse('-1', content_type='text/plain')
 
-        Invoices = Invoice.objects.all().order_by().values()
+        Invoices = Invoice.objects.all().order_by()
 
         data = [None] * len(Invoices)
 
         for i in range(0, len(Invoices)):
 
-            data[i] = {'invoice_id': Invoices[i]['invoice_id'],
-                       'user_id': Invoices[i]['user_id'], 'date': str(Invoices[i]['date']),
-                       'status': Invoices[i]['status_id']}
+            data[i] = {'invoice_id': Invoices[i].invoice_id,
+                       'user_id': Invoices[i].user_id, 'date': str(Invoices[i].date),
+                       'status': Invoices[i].status_id}
 
         data = json.dumps(data)
 
@@ -374,9 +361,22 @@ def QueryCart(request):
 
     return current_cart
 
+
+def UpdateLineItemPrice(quantity, item_id):
+    # query for that specific line item using item_id
+    item = Item.objects.filter(item_id=item_id).values()
+
+    # query for current item price of that item and store it in a variable
+    current_item_price = item[0]['price']
+
+    # calculate the total price of the line item and store it in a variable
+    calculated_line_item_price = current_item_price * quantity
+    print(calculated_line_item_price)
+    # Save that price into the existing row
+    return calculated_line_item_price
+
+
 # Retrieve or add lineitem data
-
-
 def GetPostCart(request):
 
     if not request.user.is_authenticated:
