@@ -76,14 +76,14 @@ def RegisterUser(request):
         # Create Cart
 
         # Query for the id of the just created user's id number
-        new_user = User.objects.filter(username=username)
-        new_user_id = new_user[0].id
-        new_user_registered_time = new_user[0].date_joined
+        new_user = User.objects.filter(username=username)[0]
+        new_user_id = new_user.id
+        new_user_registered_time = new_user.date_joined
 
-        # new_cart_status = InvoiceStatus.objects.filter(status='cart')[0]
+        new_cart_status = InvoiceStatus.objects.filter(id=1)[0]
 
         # Use that id number to create new invoice(cart)
-        new_cart = Invoice(user=new_user, status=1,
+        new_cart = Invoice(user=new_user, status=new_cart_status,
                            date=new_user_registered_time)
 
         new_cart.save()
