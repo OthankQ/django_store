@@ -173,7 +173,7 @@ def GetPostItem(request):
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                                str(Items[i].price), 'stock': Items[i].stock}
+                               str(Items[i].price), 'stock': Items[i].stock}
 
                 # print(data)
 
@@ -364,7 +364,8 @@ def QueryCart(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
-    current_cart = Invoice.objects.filter(user_id=request.user.id)[0]
+    current_cart = Invoice.objects.filter(
+        user_id=request.user.id, invoice_id=1)[0]
 
     return current_cart
 
