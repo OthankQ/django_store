@@ -163,25 +163,23 @@ def GetPostItem(request):
         elif request.GET.get('item_id'):
 
             requested_item_id = request.GET.get('item_id')
+            print(requested_item_id)
             Items = Item.objects.filter(
                 item_id=requested_item_id)
-
+            print(len(Items))
             try:
+                data = [None] * len(Items)
 
-                if len(Items) > 0:
+                for i in range(0, len(Items)):
 
-                    data = [None] * len(Items)
+                    data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
+                                str(Items[i].price), 'stock': Items[i].stock}
 
-                    for i in range(0, len(Items)):
+                # print(data)
 
-                        data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                                   str(Items[i].price), 'stock': Items[i].stock}
+                data = json.dumps(data)
 
-                    # print(data)
-
-                    data = json.dumps(data)
-
-                    return HttpResponse(data, content_type='text/plain')
+                return HttpResponse(data, content_type='text/plain')
 
             except(KeyError):
 
