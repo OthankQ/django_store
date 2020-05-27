@@ -55,9 +55,8 @@ def GetUserInfo(request):
         # Return the queried and converted data
         return HttpResponse(data, content_type='application/json')
 
-    # Registration
 
-
+# Registration
 def RegisterUser(request):
 
     data = json.loads(request.body)
@@ -173,8 +172,6 @@ def GetPostItem(request):
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
                                str(Items[i].price), 'stock': Items[i].stock}
 
-                # print(data)
-
                 data = json.dumps(data)
 
                 return HttpResponse(data, content_type='text/plain')
@@ -208,6 +205,7 @@ def GetPostItem(request):
         # Check if there are any existing item with matching item_id
 
         # If there is item_id within passed data, it is an update
+
         # Update
         if 'item_id' in data.keys():
 
@@ -233,24 +231,13 @@ def GetPostItem(request):
             if 'price' in data.keys():
                 original_entry.price = data['price']
 
-            # stock = indexable_original_entry['stock']
-            # name = indexable_original_entry['name']
-            # item_id = indexable_original_entry['item_id']
-            # price = indexable_original_entry['price']
-            # user_id = request.user.id
-
-            # parsed_data = Item(
-            #     item_id=item_id, stock=stock, name=name, price=price, user_id=user_id)
-
             original_entry.save()
 
         # Post new item
         else:
 
-            # item_id = data['item_id']
             name = data['name']
             user_id = request.user.id
-            # desc = data['desc']
             price = data['price']
             # image_id = data['image_id']
             stock = data['stock']
@@ -276,10 +263,10 @@ def GetPostInvoice(request):
             # Query for all the invoice under this user's id
             invoice_array = list()
             for invoice in requested_invoices:
+
                 data = {'invoice_id': invoice.invoice_id,
                         'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
-                # Convert the data to transferable json
-                # data = json.dumps(data)
+
                 invoice_array.append(data)
             invoice_json = json.dumps(invoice_array)
             return HttpResponse(invoice_json, content_type='application/json')
@@ -377,7 +364,7 @@ def UpdateLineItemPrice(quantity, item_id):
 
     # calculate the total price of the line item and store it in a variable
     calculated_line_item_price = current_item_price * quantity
-    # print(calculated_line_item_price)
+
     # Save that price into the existing row
     return calculated_line_item_price
 
@@ -394,14 +381,8 @@ def GetPostCart(request):
         try:
 
             # Query for the 'cart' status invoice
-            # cart_status = InvoiceStatus.objects.filter(id=1).values()[0]
-
             cart = Invoice.objects.filter(
                 status_id=1, user_id=request.user.id)[0]
-            # print(cart)
-
-            # print(cart.invoice_id)
-            # print(cart)
 
             lineItems = LineItem.objects.filter(
                 invoice_id=cart.invoice_id)
@@ -442,26 +423,16 @@ def GetPostCart(request):
 
             # Update
             if len(original_entry_list) > 0:
-                original_entry = original_entry_list[0]
 
-                # indexable_original_entry = list(original_entry)[0]
+                original_entry = original_entry_list[0]
 
                 if 'quantity' in data.keys():
 
                     original_entry.quantity = data['quantity']
 
-                # line_item = original_entry.line_item
-                # quantity = original_entry.quantity
-                # item_id = original_entry.item_id
-                # invoice_id = original_entry.invoice_id
-                # status_id = 1
-
                 original_entry.line_item_price = UpdateLineItemPrice(
                     original_entry.quantity, original_entry.item_id)
                 original_entry.save()
-
-                # parsed_data = LineItem(
-                #     line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity, status_id=status_id)
 
             # Post
 
@@ -475,7 +446,6 @@ def GetPostCart(request):
                     status_id=1, user_id=request.user.id)[0]
 
                 invoice_id = cart.invoice_id
-                # line_item_id = data['line_item_id']
                 item_id = data['item_id']
                 quantity = data['quantity']
 
@@ -541,19 +511,10 @@ def SubmitCart(request):
         quantity = line_item.quantity
 
         item = Item.objects.filter(item_id=item_id)[0]
-        # item_stock = item.stock
 
         # If there are more stocks than requested quantity, go through with changing the status
 
-        # line_item_id = line_item['line_item']
-        # line_item_price = line_item['line_item_price']
-        # quantity = line_item['quantity']
-        # invoice_id = line_item['invoice_id']
-        # item_id = line_item['item_id']
         line_item.status_id = 2
-
-        # submitted_item = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-        #                           quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
         line_item.save()
 
@@ -567,9 +528,6 @@ def SubmitCart(request):
         status_id=1, user_id=request.user.id)[0]
 
     cart.status_id = 2
-
-    # submitted_cart = Invoice(
-    #     date=cart['date'], invoice_id=cart['invoice_id'], status_id=2, user_id=request.user.id)
 
     cart.save()
 
@@ -612,17 +570,7 @@ def PutInLocker(request):
 
     line_item = LineItem.objects.filter(line_item=line_item.line_item)[0]
 
-    # line_item_id = line_item['line_item']
-    # user = line_item['user']
-    # line_item_price = line_item['line_item_price']
-    # quantity = line_item['quantity']
-    # invoice_id = line_item['invoice_id']
-    # item_id = line_item['item_id']
-    # status_id = 3a
     line_item.status_id = 3
-
-    # item_put_in_locker = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-    #   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
     line_item.save()
 
@@ -638,10 +586,7 @@ def CheckLineItemStatus(invoice_id):
 
     # Query for that invoice this line_item is in
 
-    # invoice = Invoice.objects.filter(invoice_id=invoice_id).values()[0]
-
     # Using that invoice_id, query all the line_items in that invoice
-    # print(invoice_id)
     other_line_items = LineItem.objects.filter(invoice_id=invoice_id)
 
     # Loop through all the queried line items and see if their statuses are all 3
@@ -656,18 +601,9 @@ def CheckLineItemStatus(invoice_id):
 
     if ready_for_completion:
 
-        # print('it runs till here')
-
         invoice = Invoice.objects.filter(invoice_id=invoice_id)[0]
-        # print(invoice)
 
-        # invoice_id = invoice['invoice_id']
-        # date = invoice['date']
         invoice.status_id = 3
-        # user_id = invoice['user_id']
-
-        # new_status_invoice = Invoice(
-        #     invoice_id=invoice_id, date=date, status_id=status_id, user_id=user_id)
 
         invoice.save()
 
@@ -683,16 +619,12 @@ def PickUpItem(request):
     # line item id will be posted by the buyer
 
     data = json.loads(request.body)
-    # line_item = data['line_item']
     line_item = LineItem.objects.filter(line_item=data['line_item'])[0]
 
     # check if the user that is associated with the line_item(buyer) and the logged in user is the same user
     # Get Buyer id from invoice object attached to the line_item
     invoice = Invoice.objects.filter(invoice_id=line_item.invoice_id)[0]
     item_buyer_id = invoice.user_id
-
-    # line_item_buyer_id = LineItem.objects.filter(
-    #     user=request.user.id).values()[0]['user']
 
     # If the requested item's buyer is not the same as user, exit with -1
     # I imagine this part of the code is where it will be decided whether the buyer will be able to open the locker door or not
@@ -703,18 +635,7 @@ def PickUpItem(request):
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
-    # line_item = LineItem.objects.filter(line_item=line_item)[0]
-
-    # line_item_id = line_item['line_item']
-    # user = line_item['user']
-    # line_item_price = line_item['line_item_price']
-    # quantity = line_item['quantity']
-    # invoice_id = line_item['invoice_id']
-    # item_id = line_item['item_id']
     line_item.status_id = 4
-
-    # item_picked_up = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-    #                           quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
     line_item.save()
 
