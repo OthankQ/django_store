@@ -65,7 +65,7 @@ class LineItem(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     # line_item_name = models.CharField(max_length=255)
     line_item_price = models.DecimalField(
-        max_digits=7, decimal_places=2, default=0)
+        max_digits=15, decimal_places=2, default=0)
     quantity = models.IntegerField(default=0)
     status = models.ForeignKey(
         LineItemStatus, on_delete=models.CASCADE)

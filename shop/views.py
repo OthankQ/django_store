@@ -380,7 +380,7 @@ def UpdateLineItemPrice(quantity, item_id):
 
     # calculate the total price of the line item and store it in a variable
     calculated_line_item_price = current_item_price * quantity
-    print(calculated_line_item_price)
+    # print(calculated_line_item_price)
     # Save that price into the existing row
     return calculated_line_item_price
 
@@ -403,8 +403,8 @@ def GetPostCart(request):
                 status_id=1, user_id=request.user.id)[0]
             # print(cart)
 
-            print(cart.invoice_id)
-            print(cart)
+            # print(cart.invoice_id)
+            # print(cart)
 
             lineItems = LineItem.objects.filter(
                 invoice_id=cart.invoice_id)
