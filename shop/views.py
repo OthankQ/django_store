@@ -4,13 +4,13 @@ from django.http import HttpResponse
 from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.db import IntegrityError
 from datetime import datetime
 import json
 
 
 def GetUserInfo(request):
     if request.method == 'GET':
-        print(request.session)
 
         # When query string exists
         if request.GET.get('username'):
@@ -18,7 +18,7 @@ def GetUserInfo(request):
             # Extract the parameter and save it to requested_id
             requested_username = request.GET.get('username')
 
-            # Query for the row that matches the criteria
+            # Query for the data that matches the criteria
             requested_user = User.objects.get(
                 username=requested_username)
 
@@ -34,20 +34,21 @@ def GetUserInfo(request):
                 # Return that data
                 return HttpResponse(data, content_type='application/json')
 
+            # When the query matched no data
             else:
 
                 return HttpResponse('-5', content_type='text/plain')
 
-        # Query for all Users
-        Users = User.objects.all().order_by().values()
+        # Query for all Users when there were no params given
+        Users = User.objects.all().order_by()
 
         # Create empty array to store data
         data = [None] * len(Users)
 
         # For each entry, create a dictionary and insert it into data array
         for i in range(0, len(Users)):
-            data[i] = {'user_id': Users[i]['user_id'], 'user_name': Users[i]
-                       ['name'], 'phone': Users[i]['phone_number']}
+            data[i] = {'user_id': Users[i].user_id, 'user_name': Users[i]
+                       .name, 'phone': Users[i].phone_number}
 
         # Convert python dictionary to passable json data
         data = json.dumps(data)
@@ -59,12 +60,30 @@ def GetUserInfo(request):
 # Registration
 def RegisterUser(request):
 
+    # Load passed json into python dict
     data = json.loads(request.body)
 
     try:
 
-        username = data['username']
         email = data['email']
+        # Check if user has entered wrong datatype for email
+        if not type(email) == str:
+            return HttpResponse('-7', content_type='text/plain')
+
+        # Check if there is a duplicate email address
+
+        # Query for any user with the entered email address
+        existing_user_with_same_email = User.objects.get(email=email)
+
+        # Exit the method and return a message if there are any users with that email already
+        if existing_user_with_same_email:
+            return HttpResponse('-8', content_type='text/plain')
+
+        username = data['username']
+        # Check if user has entered wrong datatype for username
+        if not type(username) == str:
+            return HttpResponse('-7', content_type='text/plain')
+
         password = data['password']
 
         new_user = User.objects.create_user(username, email, password)
@@ -93,6 +112,11 @@ def RegisterUser(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
+    # Throw an exception when there is a same registered username
+    except(IntegrityError):
+
+        return HttpResponse('-8', content_type='text/plain')
+
 
 def UserLogin(request):
     try:
@@ -114,7 +138,7 @@ def UserLogin(request):
             return HttpResponse('-1', content_type='text/plain')
 
     except(KeyError):
-        print("Key error")
+
         return HttpResponse('-1', content_type='text/plain')
 
 
@@ -146,8 +170,6 @@ def GetPostItem(request):
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
                                str(Items[i].price), 'stock': Items[i].stock}
 
-                print(data)
-
                 data = json.dumps(data)
 
                 return HttpResponse(data, content_type='text/plain')
@@ -159,14 +181,22 @@ def GetPostItem(request):
         # If a user is searching with item name:
         elif request.GET.get('item_id'):
 
+            # Pull item_id from passed in GET params
             requested_item_id = request.GET.get('item_id')
-            print(requested_item_id)
+
+            # If param is not int, exit method and return error message
+            if not type(requested_item_id) == int:
+                return HttpResponse('-7', content_type='text/plain')
+
+            # Query for any item that has the same item_id as the passed in params
             Items = Item.objects.filter(
                 item_id=requested_item_id)
-            print(len(Items))
+
             try:
+                # Create an empty array that has the length of number of queried data
                 data = [None] * len(Items)
 
+                # Create an array of dict for each queried data
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
@@ -180,6 +210,7 @@ def GetPostItem(request):
 
                 return HttpResponse('-6', content_type='text/plain')
 
+        # If there is no GET params given, return all the existing items
         Items = Item.objects.order_by()
 
         data = [None] * len(Items)
@@ -193,8 +224,10 @@ def GetPostItem(request):
 
         return HttpResponse(data, content_type='application/json')
 
+    # POST method (insert or update)
     elif request.method == 'POST':
 
+        # Check if user is logged in. If not, exit and return -1
         if not request.user.is_authenticated:
 
             return HttpResponse('-1', content_type='text/plain')
@@ -204,13 +237,13 @@ def GetPostItem(request):
 
         # Check if there are any existing item with matching item_id
 
-        # If there is item_id within passed data, it is an update
-
         # Update
+
+        # If there is item_id within passed data, it is an update
         if 'item_id' in data.keys():
 
-            original_entry = Item.objects.filter(
-                item_id=data['item_id'])[0]
+            original_entry = Item.objects.get(
+                item_id=data['item_id'])
 
             # Check if the owner of this item and the logged-in user is the same user_id
             item_owner_id = original_entry.user_id
@@ -219,6 +252,8 @@ def GetPostItem(request):
 
                 return HttpResponse('-3', content_type='text/plain')
 
+            # Iterate through the posted data to see which part of the data the user wishes to change.
+            # Only change the field of a data that has been passed in
             if 'stock' in data.keys():
                 original_entry.stock = data['stock']
 
@@ -256,31 +291,40 @@ def GetPostItem(request):
 def GetPostInvoice(request):
     if request.method == 'GET':
         # BLAIR CODE!!!
+
+        # Check if this dude is logged in
         if request.user.is_authenticated:
-            # Check if this dude is logged in
+
+            # Query for all the invoice under this user's id
             requested_invoices = Invoice.objects.filter(
                 user_id=request.user.id)
-            # Query for all the invoice under this user's id
-            invoice_array = list()
+
+            # Create an empty array with the length that is equivalent to the number of queried requested_invoices
+            invoice_array = [None] * len(requested_invoices)
+
+            # For each queried invoices, create a dict and append them to the empty array created above
             for invoice in requested_invoices:
 
                 data = {'invoice_id': invoice.invoice_id,
                         'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
 
                 invoice_array.append(data)
+
+            # Convert array of dict to transferable json
             invoice_json = json.dumps(invoice_array)
+
+            # Return the json
             return HttpResponse(invoice_json, content_type='application/json')
 
         else:
             # User is not logged in
             return HttpResponse('-1', content_type='text/plain')
 
-        # When there is a specified query string
+        # When there is a specified query string(Is this necessary?? Ability to look at other people's invoice history??)
         if request.GET.get('id'):
             requested_user_id = request.GET.get('id')
             requested_invoices = Invoice.objects.filter(
                 user_id=requested_user_id)
-            print(requested_invoices)
 
             if requested_invoices:
 
@@ -349,18 +393,19 @@ def QueryCart(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
-    current_cart = Invoice.objects.filter(
-        user_id=request.user.id, status_id=1)[0]
+    current_cart = Invoice.objects.get(
+        user_id=request.user.id, status_id=1)
 
     return current_cart
 
 
 def UpdateLineItemPrice(quantity, item_id):
+
     # query for that specific line item using item_id
-    item = Item.objects.filter(item_id=item_id).values()
+    item = Item.objects.get(item_id=item_id)
 
     # query for current item price of that item and store it in a variable
-    current_item_price = item[0]['price']
+    current_item_price = item.price
 
     # calculate the total price of the line item and store it in a variable
     calculated_line_item_price = current_item_price * quantity
@@ -369,9 +414,10 @@ def UpdateLineItemPrice(quantity, item_id):
     return calculated_line_item_price
 
 
-# Retrieve or add lineitem data
+# Retrieve or add lineitem data from cart(1) status invoice
 def GetPostCart(request):
 
+    # User needs to be logged in, or exits the method and returns -1
     if not request.user.is_authenticated:
 
         return HttpResponse('-1', content_type='text/plain')
@@ -381,23 +427,28 @@ def GetPostCart(request):
         try:
 
             # Query for the 'cart' status invoice
-            cart = Invoice.objects.filter(
-                status_id=1, user_id=request.user.id)[0]
+            cart = Invoice.objects.get(
+                status_id=1, user_id=request.user.id)
 
+            # Query for every item existing in the cart
             lineItems = LineItem.objects.filter(
                 invoice_id=cart.invoice_id)
 
+            # Create an empty array with the length equivalent to existing line items in cart
             data = [None] * len(lineItems)
 
+            # Create dict of line items in cart and append them to the empty array created above
             for i in range(0, len(lineItems)):
 
                 data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id,
                            'line_item_price': float(lineItems[i].line_item_price), 'quantity': lineItems[i].quantity, 'status': lineItems[i].status_id}
 
+            # Convert the array into transferable json data
             data = json.dumps(data)
 
             print('Successfully fetched line items from current cart')
 
+            # Return the json data
             return HttpResponse(data, content_type='application/json')
 
         except(KeyError):
@@ -407,20 +458,23 @@ def GetPostCart(request):
     elif request.method == 'POST':
 
         try:
-            # Retrieve data from user request
 
+            # Retrieve data from user request
             data = json.loads(request.body)
 
-            # Check if there is already an entry with  line_item_id of the data sent by the user
-            # If there is already one, query for that data
-
             # Cart
-
             current_cart = QueryCart(request)
 
+            # Check if item_id input is of the right data type: int
+            if not type(data['item_id']) == int:
+
+                return HttpResponse('-7', content_type='text/plain')
+
+            # Check if there is already an entry with  line_item_id of the data sent by the user
             original_entry_list = LineItem.objects.filter(
                 item_id=data['item_id'], invoice_id=current_cart.invoice_id)
 
+            # If there is already a same lineitem existing in cart, this is an update to quantity
             # Update
             if len(original_entry_list) > 0:
 
@@ -428,29 +482,40 @@ def GetPostCart(request):
 
                 if 'quantity' in data.keys():
 
+                    # Check if quantity input is of right data type: int
+                    if not type(data['quantity']) == int:
+
+                        return HttpResponse('-7', content_type='text/plain')
+
                     original_entry.quantity = data['quantity']
 
                 original_entry.line_item_price = UpdateLineItemPrice(
                     original_entry.quantity, original_entry.item_id)
+
                 original_entry.save()
 
-            # Post
+            # If there is no line_item with the same line_item_id in cart, it's a post
 
-            # There is no line_item with the same line_item_id
-
+             # Post(Putting items into your cart)
             else:
 
                 # Query for this user's cart
-
-                cart = Invoice.objects.filter(
-                    status_id=1, user_id=request.user.id)[0]
+                cart = Invoice.objects.get(
+                    status_id=1, user_id=request.user.id)
 
                 invoice_id = cart.invoice_id
                 item_id = data['item_id']
                 quantity = data['quantity']
 
+                # Check if both of the passed in data are of the right type: int
+                if not type(item_id) == int or not type(quantity) == int:
+
+                    return HttpResponse('-7', content_type='text/plain')
+
+                # Calculate the total line_item_price
                 line_item_price = UpdateLineItemPrice(quantity, item_id)
 
+                # Create and save new lineitem data
                 new_line_item = LineItem(status_id=1,
                                          invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
@@ -490,7 +555,7 @@ def SubmitCart(request):
         item_id = line_item.item_id
         quantity = line_item.quantity
 
-        item_stock = Item.objects.filter(item_id=item_id)[0].stock
+        item_stock = Item.objects.get(item_id=item_id).stock
 
         if item_stock < quantity:
 
@@ -510,7 +575,7 @@ def SubmitCart(request):
         item_id = line_item.item_id
         quantity = line_item.quantity
 
-        item = Item.objects.filter(item_id=item_id)[0]
+        item = Item.objects.get(item_id=item_id)
 
         # If there are more stocks than requested quantity, go through with changing the status
 
@@ -524,8 +589,8 @@ def SubmitCart(request):
 
      # Query for the invoice with status of cart(1) and switch the status to paid(2)
 
-    cart = Invoice.objects.filter(
-        status_id=1, user_id=request.user.id)[0]
+    cart = Invoice.objects.get(
+        status_id=1, user_id=request.user.id)
 
     cart.status_id = 2
 
