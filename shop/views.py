@@ -711,7 +711,7 @@ def PickUpItem(request):
 
 
 # Method to flag different line items for 'save for later' status
-def saveToggle(request):
+def toggleSave(request):
 
     data = json.loads(request)
     line_item_id = data['line_item_id']
@@ -743,3 +743,22 @@ def saveToggle(request):
     line_item.save()
 
     return HttpResponse('0', content_type='text/plain')
+
+
+def getNotification(request):
+
+    # Check if the user is logged in.
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    notifications = Notification.objects.filter(user_id=request.user.id)
+
+    data = [None] * len(notifications)
+
+    for i in range(0, len(notifications)):
+        data[i] = {'notification_body': notifications[i].notification_body,
+                   'read': notifications[i].read}
+
+    data = json.dumps(data)
+
+    return HttpResponse(data, content_type='application/json')
