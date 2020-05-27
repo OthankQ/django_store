@@ -713,7 +713,7 @@ def PickUpItem(request):
 # Method to flag different line items for 'save for later' status
 def toggleSave(request):
 
-    data = json.loads(request)
+    data = json.loads(request.body)
     line_item_id = data['line_item_id']
 
     # Check if the user is logged in. If not, return -1 and exit
@@ -733,11 +733,11 @@ def toggleSave(request):
     line_item = LineItem.objects.get(line_item=line_item_id)
     # if the status of the lineitem is 1, switch to 6
     if line_item.status_id == 1:
-        line_item.status = 6
+        line_item.status_id = 6
 
     # else if the status of the lineitem is 6, switch to 1
     else if line_item.status_id == 6:
-        line_item.status = 1
+        line_item.status_id = 1
 
     # Update and save the data
     line_item.save()
@@ -747,18 +747,45 @@ def toggleSave(request):
 
 def getNotification(request):
 
-    # Check if the user is logged in.
+    # Check if the user is logged in
     if not request.user.is_authenticated:
         return HttpResponse('-1', content_type='text/plain')
 
+    # Query for all the notification data with the logged in user's user id
     notifications = Notification.objects.filter(user_id=request.user.id)
 
+    # Make an empty array and populate it with the dict of queried notification data
     data = [None] * len(notifications)
 
     for i in range(0, len(notifications)):
         data[i] = {'notification_body': notifications[i].notification_body,
                    'read': notifications[i].read}
 
+    # Convert the array into transferable data
     data = json.dumps(data)
 
+    # Return the converted data
     return HttpResponse(data, content_type='application/json')
+
+
+def deleteNotification(request):
+
+    # Check if the user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    data = json.loads(request.body)
+
+    # if a notification id is given, query the notification using the id and delete only that notification
+    if id in data.keys():
+        notification = Notification.objects.get(
+            id=data['notification_id'], user_id=request.user.id)
+        notification.delete()
+
+    # if not, fetch all notifications under this user's id and delete all of them
+    notifications = Notification.objects.filter(user_id=request.user.id)
+
+    for notification in notifications:
+        notification.delete()
+
+    return HttpResponse('0', content_type='text/plain')
