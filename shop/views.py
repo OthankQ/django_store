@@ -363,7 +363,7 @@ def QueryCart(request):
         return HttpResponse('-1', content_type='text/plain')
 
     current_cart = Invoice.objects.filter(
-        user_id=request.user.id, invoice_id=1)[0]
+        user_id=request.user.id, status_id=1)[0]
 
     return current_cart
 
@@ -437,11 +437,12 @@ def GetPostCart(request):
 
             current_cart = QueryCart(request)
 
-            original_entry = LineItem.objects.filter(
+            original_entry_list = LineItem.objects.filter(
                 item_id=data['item_id'], invoice_id=current_cart.invoice_id)
 
             # Update
-            if len(original_entry) > 0:
+            if len(original_entry_list) > 0:
+                original_entry = original_entry_list[0]
 
                 # indexable_original_entry = list(original_entry)[0]
 
@@ -456,7 +457,8 @@ def GetPostCart(request):
                 # status_id = 1
 
                 original_entry.line_item_price = UpdateLineItemPrice(
-                    quantity, item_id)
+                    original_entry.quantity, original_entry.item_id)
+                original_entry.save()
 
                 # parsed_data = LineItem(
                 #     line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity, status_id=status_id)
@@ -482,7 +484,7 @@ def GetPostCart(request):
                 new_line_item = LineItem(status_id=1,
                                          invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
-            new_line_item.save()
+                new_line_item.save()
 
             print('The lineItem has been added to the cart successfully')
 
