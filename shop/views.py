@@ -140,20 +140,18 @@ def GetPostItem(request):
 
             try:
 
-                if Items:
+                data = [None] * len(Items)
 
-                    data = [None] * len(Items)
+                for i in range(0, len(Items)):
 
-                    for i in range(0, len(Items)):
+                    data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
+                               str(Items[i].price), 'stock': Items[i].stock}
 
-                        data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                                   str(Items[i].price), 'stock': Items[i].stock}
+                print(data)
 
-                    print(data)
+                data = json.dumps(data)
 
-                    data = json.dumps(data)
-
-                    return HttpResponse(data, content_type='text/plain')
+                return HttpResponse(data, content_type='text/plain')
 
             except(KeyError):
 
