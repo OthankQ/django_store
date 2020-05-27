@@ -1,7 +1,7 @@
 # from rest_framework import routers
 # from .api import UserViewSet, ItemViewSet
 from django.urls import path, include
-from .views import GetUserInfo, RegisterUser, UserLogin, UserLogout, GetPostItem, GetPostInvoice, GetPostCart, SubmitCart, PutInLocker, PickUpItem
+from .views import GetUserInfo, RegisterUser, UserLogin, UserLogout, GetPostItem, GetPostInvoice, GetPostCart, SubmitCart, PutInLocker, PickUpItem, saveToggle
 
 urlpatterns = [
     path('user/info/', GetUserInfo, name='user'),
@@ -13,7 +13,8 @@ urlpatterns = [
     path('cart/', GetPostCart, name='cart'),
     path('submit/', SubmitCart, name='submit'),
     path('dropoff/', PutInLocker, name='dropoff'),
-    path('pickup/', PickUpItem, name='pickup')
+    path('pickup/', PickUpItem, name='pickup'),
+    path('save/', saveToggle, name='save')
 ]
 
 
