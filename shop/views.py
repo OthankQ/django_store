@@ -168,13 +168,13 @@ def GetPostItem(request):
 
             try:
 
-                if Items:
+                if len(Items) > 0:
 
                     data = [None] * len(Items)
 
                     for i in range(0, len(Items)):
 
-                        data[i] = {'item_id': Items[i].item.id, 'item_name': Items[i].name, 'price':
+                        data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
                                    str(Items[i].price), 'stock': Items[i].stock}
 
                     # print(data)
@@ -194,7 +194,7 @@ def GetPostItem(request):
         for i in range(0, len(Items)):
 
             data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i]
-                       .item, 'price': str(Items[i].price), 'stock': Items[i].stock}
+                       .name, 'price': str(Items[i].price), 'stock': Items[i].stock}
 
         data = json.dumps(data)
 
