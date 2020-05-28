@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 
 
-def GetUserInfo(request):
+def getUserInfo(request):
     if request.method == 'GET':
 
         # When query string exists
@@ -58,7 +58,7 @@ def GetUserInfo(request):
 
 
 # Registration
-def RegisterUser(request):
+def registerUser(request):
 
     # Load passed json into python dict
     data = json.loads(request.body)
@@ -118,7 +118,7 @@ def RegisterUser(request):
         return HttpResponse('-8', content_type='text/plain')
 
 
-def UserLogin(request):
+def userLogin(request):
     try:
         data = json.loads(request.body)
 
@@ -143,13 +143,13 @@ def UserLogin(request):
 
 
 # User Logout
-def UserLogout(request):
+def userLogout(request):
     logout(request)
     return HttpResponse('0', content_type='text/plain')
 
 
 # Retrieve or add Item data
-def GetPostItem(request):
+def getPostItem(request):
 
     if request.method == 'GET':
 
@@ -288,7 +288,7 @@ def GetPostItem(request):
 
 
 # Retreive or add invoice data
-def GetPostInvoice(request):
+def getPostInvoice(request):
     if request.method == 'GET':
         # BLAIR CODE!!!
 
@@ -387,7 +387,7 @@ def GetPostInvoice(request):
             return HttpResponse('-1', content_type='text/plain')
 
 
-def QueryCart(request):
+def queryCart(request):
 
     if not request.user.is_authenticated:
 
@@ -399,7 +399,7 @@ def QueryCart(request):
     return current_cart
 
 
-def UpdateLineItemPrice(quantity, item_id):
+def updateLineItemPrice(quantity, item_id):
 
     # query for that specific line item using item_id
     item = Item.objects.get(item_id=item_id)
@@ -415,7 +415,7 @@ def UpdateLineItemPrice(quantity, item_id):
 
 
 # Retrieve or add lineitem data from cart(1) status invoice
-def GetPostCart(request):
+def getPostCart(request):
 
     # User needs to be logged in, or exits the method and returns -1
     if not request.user.is_authenticated:
@@ -463,7 +463,7 @@ def GetPostCart(request):
             data = json.loads(request.body)
 
             # Cart
-            current_cart = QueryCart(request)
+            current_cart = queryCart(request)
 
             # Check if item_id input is of the right data type: int
             if not type(data['item_id']) == int:
@@ -489,7 +489,7 @@ def GetPostCart(request):
 
                     original_entry.quantity = data['quantity']
 
-                original_entry.line_item_price = UpdateLineItemPrice(
+                original_entry.line_item_price = updateLineItemPrice(
                     original_entry.quantity, original_entry.item_id)
 
                 original_entry.save()
@@ -513,7 +513,7 @@ def GetPostCart(request):
                     return HttpResponse('-7', content_type='text/plain')
 
                 # Calculate the total line_item_price
-                line_item_price = UpdateLineItemPrice(quantity, item_id)
+                line_item_price = updateLineItemPrice(quantity, item_id)
 
                 # Create and save new lineitem data
                 new_line_item = LineItem(status_id=1,
@@ -571,7 +571,7 @@ def deleteLineItem(request):
     return HttpResponse('0', content_type='text/plain')
 
 
-def SubmitCart(request):
+def submitCart(request):
 
     # Check if a user is logged in
     if not request.user.is_authenticated:
@@ -658,7 +658,7 @@ def SubmitCart(request):
 
 
 # Method that is fired when seller puts an item into a locker
-def PutInLocker(request):
+def putInLocker(request):
 
     # Check if seller is logged in
     if not request.user.is_authenticated:
@@ -723,7 +723,7 @@ def CheckLineItemStatus(invoice_id):
         invoice.save()
 
 
-def PickUpItem(request):
+def pickUpItem(request):
 
     # Check if buyer is logged in
 
