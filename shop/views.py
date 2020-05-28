@@ -531,6 +531,46 @@ def GetPostCart(request):
             return HttpResponse('-1', content_type='text/plain')
 
 
+# Method to remove item from cart
+def deleteLineItem(request):
+    # Check if a user is logged in
+    if not request.user.is_authenticated:
+
+        return HttpResponse('login required', content_type='text/plain')
+
+    data = json.loads(request.body)
+
+    # If line_item is given, and when the logged in user id matches the buyer's id, delete that one item
+    if 'line_item' in data.keys():
+
+        # Query for the lineitem using line_item and current cart(invoice) id
+        line_item = LineItem.objects.get(
+            line_item=data['line_item'], status_id=1)
+        invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
+        buyer = invoice.user_id
+
+        if not invoice.user_id == request.user.id:
+            return HttpResponse('-1', content_type='text/plain')
+
+        line_item.delete()
+
+    # If no line_item is given , query and delete everything in cart
+
+    # Check if logged in user and invoice's user id matches
+    logged_in_user_cart = Invoice.objects.filter(
+        user_id=request.user.id, status_id=1)
+
+    # Query everything in this user's invoice with a status of 1(cart)
+    line_items = LineItem.objects.filter(
+        status_id=1, invoice_id=logged_in_user_cart.invoice_id)
+
+    # Use a for loop to iterate through all the line_items and delete them
+    for line_item in line_items:
+        line_item.delete()
+
+    return HttpResponse('0', content_type='text/plain')
+
+
 def SubmitCart(request):
 
     # Check if a user is logged in
@@ -568,40 +608,51 @@ def SubmitCart(request):
 
             return HttpResponse('-2', content_type='text/plain')
 
-    # Change status for lineitem and stocks for item
-    for line_item in line_items_in_cart:
-
-        # Query for the item of the line_item
-        item_id = line_item.item_id
-        quantity = line_item.quantity
-
-        item = Item.objects.get(item_id=item_id)
-
-        # If there are more stocks than requested quantity, go through with changing the status
-
-        line_item.status_id = 2
-
-        line_item.save()
-
-        # update the stock of the item and save the item
-        item.stock = item.stock - quantity
-        item.save()
-
-     # Query for the invoice with status of cart(1) and switch the status to paid(2)
-
-    cart = Invoice.objects.get(
-        status_id=1, user_id=request.user.id)
-
-    cart.status_id = 2
-
-    cart.save()
-
     # Create a new cart under this user's user_id
 
     new_cart = Invoice(user=request.user, status_id=1,
                        date=datetime.now())
 
     new_cart.save()
+
+    # Change status for lineitem and stocks for item
+    for line_item in line_items_in_cart:
+
+        # Query for the item of the line_item
+        item_id = line_item.item_id
+        quantity = line_item.quantity
+        status = line_item.status_id
+
+        item = Item.objects.get(item_id=item_id)
+
+        # If there are more stocks than requested quantity,
+        # and the status of the item is 1,
+        # go through with changing the status and calculating the item stocks
+        if status == 1:
+            line_item.status_id = 2
+
+            line_item.save()
+
+            # update the stock of the item and save the item
+            item.stock = item.stock - quantity
+            item.save()
+
+        # Change invoice_id of the line_item with a status of 6 to the one of the new cart
+        else if status == 6:
+
+            # Newly created cart
+            new_cart = Invoice.objects.get(
+                user_id=request.user.id, status_id=1)
+            line_item.invoice_id = new_cart.invoice_id
+            line_item.save()
+
+     # Query for the invoice with status of cart(1) and switch the status to paid(2)
+    cart = Invoice.objects.get(
+        status_id=1, user_id=request.user.id)
+
+    cart.status_id = 2
+
+    cart.save()
 
     return HttpResponse('0', content_type='text/plain')
 
@@ -768,6 +819,7 @@ def getNotification(request):
     return HttpResponse(data, content_type='application/json')
 
 
+# Method for deleting notifications
 def deleteNotification(request):
 
     # Check if the user is logged in
