@@ -89,7 +89,7 @@ class Messages(models.Model):
     line_item = models.ForeignKey(LineItem, on_delete=models.CASCADE)
     message_body = models.CharField(max_length=255)
     date_created = models.DateTimeField('message creation date')
-    image_id = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(null=True, blank=True)
 
     def __str__(self):
         return self.message_body

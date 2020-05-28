@@ -638,7 +638,7 @@ def SubmitCart(request):
             item.save()
 
         # Change invoice_id of the line_item with a status of 6 to the one of the new cart
-        else if status == 6:
+        elif status == 6:
 
             # Newly created cart
             new_cart = Invoice.objects.get(
@@ -778,7 +778,7 @@ def toggleSave(request):
 
     # Check if the two user_ids match
     if not request.user.id == cart_owner:
-        return HttpResponse('-4', content_type='text/plain'')
+        return HttpResponse('-4', content_type='text/plain')
 
     line_item = LineItem.objects.get(line_item=line_item_id)
     # if the status of the lineitem is 1, switch to 6
@@ -786,7 +786,7 @@ def toggleSave(request):
         line_item.status_id = 6
 
     # else if the status of the lineitem is 6, switch to 1
-    else if line_item.status_id == 6:
+    elif line_item.status_id == 6:
         line_item.status_id = 1
 
     # Update and save the data
@@ -884,7 +884,7 @@ def getPostMessage(request):
 
             return HttpResponse('-9', content_type='text/plain')
 
-    else if request.method == 'POST':
+    elif request.method == 'POST':
 
         # Extract data from passed in json
         data = json.loads(request.body)
@@ -903,7 +903,8 @@ def getPostMessage(request):
 
             # Extract message_body from passed in json and create a message object
             message = data['message_body']
-            new_message = Messages('message_body': message, 'date_created': datetime.now(), 'line_item_id': line_item_id, 'user_id': request.user.id)
+            new_message = Messages(message_body=message, date_created=datetime.now(
+            ), line_item_id=line_item_id, user_id=request.user.id)
 
             # Save the newly created message object
             new_message.save()
@@ -911,4 +912,3 @@ def getPostMessage(request):
         else:
 
             return HttpResponse('-9', content_type='text/plain')
-

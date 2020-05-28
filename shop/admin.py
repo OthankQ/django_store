@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import UserAdditionalInfo, Item, Invoice, LineItem
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, Messages
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -31,6 +31,12 @@ class ItemAdmin(admin.ModelAdmin):
         (None, {'fields': ('name', 'desc', 'price', 'stock', 'image_id')})]
 
 
+class MessagesAdmin(admin.ModelAdmin):
+    fieldsets = [
+        (None, {'fields': ('user', 'line_item', 'message_body', 'date_created', 'image')})]
+
+
 # admin.site.register(User, UserAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Item, ItemAdmin)
+admin.site.register(Messages, MessagesAdmin)
