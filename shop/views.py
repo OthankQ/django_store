@@ -862,8 +862,8 @@ def getPostMessage(request):
 
         # Check if the requesting user id and the line_item buyer's id or seller's id matches
         # And only fetches the messages if they do
-
         if request.user.id == buyer_id or request.user.id == seller_id:
+
             # Query for all the existing messages with this user and line_item
             # And order them by desc date_created
             messages = Messages.objects.filter(
@@ -879,3 +879,36 @@ def getPostMessage(request):
             data = json.dumps(data)
 
             return HttpResponse(data, content_type='application/json')
+
+        else:
+
+            return HttpResponse('-9', content_type='text/plain')
+
+    else if request.method == 'POST':
+
+        # Extract data from passed in json
+        data = json.loads(request.body)
+
+        line_item_id = data['line_item_id']
+        user_id = data['user_id']
+
+        line_item = LineItem.objects.get(line_item=line_item_id)
+        item = Item.objects.get(line_item.item_id)
+        invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
+        buyer_id = invoice.user_id
+        seller_id = item.user_id
+
+        # Check if the user is either the buyer or the seller of this lineitem
+        if request.user.id == buyer_id or request.user.id == seller_id:
+
+            # Extract message_body from passed in json and create a message object
+            message = data['message_body']
+            new_message = Messages('message_body': message, 'date_created': datetime.now(), 'line_item_id': line_item_id, 'user_id': request.user.id)
+
+            # Save the newly created message object
+            new_message.save()
+
+        else:
+
+            return HttpResponse('-9', content_type='text/plain')
+
