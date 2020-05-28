@@ -661,7 +661,6 @@ def SubmitCart(request):
 def PutInLocker(request):
 
     # Check if seller is logged in
-
     if not request.user.is_authenticated:
 
         return HttpResponse('-1', content_type='text/plain')
@@ -841,3 +840,42 @@ def deleteNotification(request):
         notification.delete()
 
     return HttpResponse('0', content_type='text/plain')
+
+
+def getPostMessage(request):
+
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    if request.method == 'GET':
+
+        # Extract info needed from GET params
+        line_item_id = request.GET.get('line_item')
+        user_id = request.GET.get('user_id')
+
+        line_item = LineItem.objects.get(line_item=line_item_id)
+        item = Item.objects.get(line_item.item_id)
+        invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
+        buyer_id = invoice.user_id
+        seller_id = item.user_id
+
+        # Check if the requesting user id and the line_item buyer's id or seller's id matches
+        # And only fetches the messages if they do
+
+        if request.user.id == buyer_id or request.user.id == seller_id:
+            # Query for all the existing messages with this user and line_item
+            # And order them by desc date_created
+            messages = Messages.objects.filter(
+                line_item_id=line_item.line_item).order_by('-date_created')
+
+            data = [None] * len(messages)
+
+            for i in range(0, len(messages)):
+
+                data[i] = {'message_body': messages[i].message_body, 'date_created': messages[i].date_created,
+                           'image_id': messages[i].image_id, 'user_id': messages[i].user_id}
+
+            data = json.dumps(data)
+
+            return HttpResponse(data, content_type='application/json')
