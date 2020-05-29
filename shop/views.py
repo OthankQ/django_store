@@ -589,6 +589,15 @@ def submitCart(request):
     line_items_in_cart = LineItem.objects.filter(
         invoice=current_cart_id)
 
+    # Query for line items that has a status of 2(not saved)
+    line_items_in_cart_not_saved = LineItem.objects.filter(
+        invoice=current_cart_id, status_id=2)
+
+    # If there are no items ready for purchase in the cart, abort submitting
+    if len(line_items_in_cart_not_saved) == 0:
+
+        return HttpResponse('No lineitems to submit', content_type='text/plain')
+
     # Do stock check first here and return -1 error if stock is less than quantity
     for line_item in line_items_in_cart:
 
@@ -646,7 +655,8 @@ def submitCart(request):
             line_item.invoice_id = new_cart.invoice_id
             line_item.save()
 
-     # Query for the invoice with status of cart(1) and switch the status to paid(2)
+    # Query for the invoice with status of cart(1) and switch the status to paid(2)
+    # Don't exactly now why this query gets more than 1? Maybe it didn't?
     cart = Invoice.objects.get(
         status_id=1, user_id=request.user.id, invoice_id=current_cart_id)
 
