@@ -641,8 +641,8 @@ def submitCart(request):
         elif status == 5:
 
             # Newly created cart
-            new_cart = Invoice.objects.get(
-                user_id=request.user.id, status_id=1)
+            new_cart = Invoice.objects.filter(
+                user_id=request.user.id, status_id=1).order_by('-invoice_id')[0]
             line_item.invoice_id = new_cart.invoice_id
             line_item.save()
 
