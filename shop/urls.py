@@ -17,7 +17,7 @@ urlpatterns = [
     path('save/', toggleSave, name='save'),
     path('getNotification/', getNotification, name='getNotification'),
     path('deleteNotification/', deleteNotification, name='deleteNotification'),
-    path('getPostMessage', getPostMessage, name='getPostMessage'),
+    path('getPostMessage/', getPostMessage, name='getPostMessage'),
 ]
 
 

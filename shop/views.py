@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification, Messages
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
@@ -638,7 +638,7 @@ def submitCart(request):
             item.save()
 
         # Change invoice_id of the line_item with a status of 6 to the one of the new cart
-        elif status == 6:
+        elif status == 5:
 
             # Newly created cart
             new_cart = Invoice.objects.get(
@@ -648,7 +648,7 @@ def submitCart(request):
 
      # Query for the invoice with status of cart(1) and switch the status to paid(2)
     cart = Invoice.objects.get(
-        status_id=1, user_id=request.user.id)
+        status_id=1, user_id=request.user.id, invoice_id=current_cart_id)
 
     cart.status_id = 2
 
@@ -771,7 +771,7 @@ def toggleSave(request):
         return HttpResponse('-1', content_type='text/plain')
 
     # Query for the invoice_id of the current cart
-    cart = Invoice.objects.get(user_id=request.user.id)
+    cart = Invoice.objects.get(user_id=request.user.id, status_id=1)
 
     # Query for the user of the line item using invoice
     cart_owner = cart.user_id
@@ -782,11 +782,12 @@ def toggleSave(request):
 
     line_item = LineItem.objects.get(line_item=line_item_id)
     # if the status of the lineitem is 1, switch to 6
+    print(line_item)
     if line_item.status_id == 1:
-        line_item.status_id = 6
+        line_item.status_id = 5
 
     # else if the status of the lineitem is 6, switch to 1
-    elif line_item.status_id == 6:
+    elif line_item.status_id == 5:
         line_item.status_id = 1
 
     # Update and save the data
@@ -828,16 +829,17 @@ def deleteNotification(request):
     data = json.loads(request.body)
 
     # if a notification id is given, query the notification using the id and delete only that notification
-    if id in data.keys():
+    if 'notification_id' in data.keys():
         notification = Notification.objects.get(
             id=data['notification_id'], user_id=request.user.id)
         notification.delete()
 
     # if not, fetch all notifications under this user's id and delete all of them
-    notifications = Notification.objects.filter(user_id=request.user.id)
+    else:
+        notifications = Notification.objects.filter(user_id=request.user.id)
 
-    for notification in notifications:
-        notification.delete()
+        for notification in notifications:
+            notification.delete()
 
     return HttpResponse('0', content_type='text/plain')
 
@@ -852,10 +854,10 @@ def getPostMessage(request):
 
         # Extract info needed from GET params
         line_item_id = request.GET.get('line_item')
-        user_id = request.GET.get('user_id')
+        user_id = request.user.id
 
         line_item = LineItem.objects.get(line_item=line_item_id)
-        item = Item.objects.get(line_item.item_id)
+        item = Item.objects.get(item_id=line_item.item_id)
         invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
         buyer_id = invoice.user_id
         seller_id = item.user_id
@@ -873,8 +875,8 @@ def getPostMessage(request):
 
             for i in range(0, len(messages)):
 
-                data[i] = {'message_body': messages[i].message_body, 'date_created': messages[i].date_created,
-                           'image_id': messages[i].image_id, 'user_id': messages[i].user_id}
+                data[i] = {'message_body': messages[i].message_body, 'date_created': str(messages[i].date_created),
+                           'image_id': str(messages[i].image), 'user_id': messages[i].user_id}
 
             data = json.dumps(data)
 
@@ -890,10 +892,10 @@ def getPostMessage(request):
         data = json.loads(request.body)
 
         line_item_id = data['line_item_id']
-        user_id = data['user_id']
+        user_id = request.user.id
 
         line_item = LineItem.objects.get(line_item=line_item_id)
-        item = Item.objects.get(line_item.item_id)
+        item = Item.objects.get(item_id=line_item.item_id)
         invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
         buyer_id = invoice.user_id
         seller_id = item.user_id
@@ -908,6 +910,8 @@ def getPostMessage(request):
 
             # Save the newly created message object
             new_message.save()
+
+            return HttpResponse('0', content_type='text/plain')
 
         else:
 
