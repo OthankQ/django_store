@@ -364,27 +364,29 @@ def getPostInvoice(request):
 
         return HttpResponse(data, content_type='application/json')
 
-    elif request.method == 'POST':
+    # Commenting out POST request for invoice. There is no need.
 
-        try:
-            data = json.loads(request.body)
-            invoice_id = data['invoice_id']
-            user_id = data['user_id']
-            date = data['date']
-            status = data['status']
+    # elif request.method == 'POST':
 
-            parsed_data = Invoice(
-                invoice_id=invoice_id, user_id=user_id, date=date, status=status)
+    #     try:
+    #         data = json.loads(request.body)
+    #         invoice_id = data['invoice_id']
+    #         user_id = data['user_id']
+    #         date = data['date']
+    #         status = data['status']
 
-            parsed_data.save()
+    #         parsed_data = Invoice(
+    #             invoice_id=invoice_id, user_id=user_id, date=date, status=status)
 
-            print('Invoice has been added successfully')
+    #         parsed_data.save()
 
-            return HttpResponse('0', content_type='text/plain')
+    #         print('Invoice has been added successfully')
 
-        except(KeyError):
-            print("Key error")
-            return HttpResponse('-1', content_type='text/plain')
+    #         return HttpResponse('0', content_type='text/plain')
+
+    #     except(KeyError):
+    #         print("Key error")
+    #         return HttpResponse('-1', content_type='text/plain')
 
 
 def queryCart(request):
