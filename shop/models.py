@@ -79,6 +79,7 @@ class Notification(models.Model):
     read = models.BooleanField(default=False)
     # cleared = models.BooleanField(default=False)
     notification_body = models.CharField(max_length=255)
+    line_item_id = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.notification_body

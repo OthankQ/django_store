@@ -697,9 +697,15 @@ def putInLocker(request):
 
     line_item = LineItem.objects.get(line_item=line_item.line_item)
 
+    buyer_id = Invoice.objects.get(invoice_id=line_item.invoice_id).user_id
+
     line_item.status_id = 3
 
     line_item.save()
+
+    # Create and save notification that is linked to the buyer's id and line_item, telling them the item has been dropped off
+    dropped_off_notification = Notification(
+        notification_body="This item has been dropped off.", user=buyer_id, line_item_id=line_item.line_item)
 
     return HttpResponse('0', content_type='text/plain')
 
