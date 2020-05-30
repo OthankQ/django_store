@@ -5,9 +5,10 @@ from django.contrib.auth.models import User
 class UserAdditionalInfo(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True)
-    password = models.CharField(max_length=255)
     phone_number = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
+    thumbs_up = models.IntegerField(default=0)
+    thumbs_down = models.IntegerField(default=0)
 
     def __str__(self):
         return self.user_id

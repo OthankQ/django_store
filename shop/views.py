@@ -593,7 +593,7 @@ def submitCart(request):
 
     # Query for line items that has a status of 2(not saved)
     line_items_in_cart_not_saved = LineItem.objects.filter(
-        invoice=current_cart_id, status_id=2)
+        invoice=current_cart_id, status_id=1)
 
     # If there are no items ready for purchase in the cart, abort submitting
     if len(line_items_in_cart_not_saved) == 0:
@@ -635,12 +635,19 @@ def submitCart(request):
         status = line_item.status_id
 
         item = Item.objects.get(item_id=item_id)
+        seller_id = item.user_id
 
         # If there are more stocks than requested quantity,
         # and the status of the item is 1,
         # go through with changing the status and calculating the item stocks
         if status == 1:
             line_item.status_id = 2
+
+            # Create a notification and send it to the seller of the item
+            seller_notification = Notification(
+                user_id=seller_id, notification_body="A buyer would like to purchase this item.", line_item_id=line_item.line_item)
+
+            seller_notification.save()
 
             line_item.save()
 
@@ -964,7 +971,7 @@ def submittedLineItem(request):
     # How do I present buyer_id to each line_item_submitted?
 
     # All items that have been submitted(status >= 2)
-    line_items_submitted = line_item.objects.filter(
+    line_items_submitted = LineItem.objects.filter(
         item__user_id=user_id, status_id__gte=2)
 
     data = [None] * len(line_items_submitted)
@@ -981,3 +988,52 @@ def submittedLineItem(request):
     data = json.dumps(data)
 
     return HttpResponse(data, content_type='application/json')
+
+
+# Method to rate the user based on the transaction. POST method
+def rateUser(request):
+
+    data = json.loads(request.body)
+
+    line_item_id = data['line_item_id']  # int
+    rating = data['rating']  # boolean
+
+    line_item = LineItem.objects.get(id=line_item_id)
+    item_id = line_item.item_id
+    item = Item.objects.get(item_id=item_id)
+    item_owner_id = item.user_id
+
+    invoice_id = line_item.invoice_id
+    invoice = Invoice.objects.get(invoice_id=invoice_id)
+    invoice_owner_id = invoice.user_id
+    user_id = request.user.id
+
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # if the current user matches the item(retrieved from line_item) owner, this user is the seller.
+    # Therefore the rating will count towards the buyer's rating
+    if user_id == item_owner_id:
+        invoice_owner = User.objects.get(id=invoice_owner_id)
+
+        if rating:  # If the rating is true
+            invoice_owner.thumbs_up = invoice_owner.thumbs_up + 1
+            invoice_owner.save()
+        else:
+            invoice_owner.thumbs_down = invoice_owner.thumbs_down + 1
+            invoice_owner.save()
+
+    # If that is not the case, the user is the buyer,
+    # Therefore the rating should count towards the seller's rating
+    else:
+        item_owner = User.objects.get(id=item_owner_id)
+
+        if rating:  # If the rating is true
+            item_owner.thumbs_up = item_owner.thumbs_up + 1
+            item_owner.save()
+        else:
+            item_owner.thumbs_down = item_owner.thumbs_down + 1
+            item_owner.save()
+
+    return HttpResponse('0', content_type='text/plain')
