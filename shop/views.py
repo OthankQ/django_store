@@ -613,7 +613,7 @@ def submitCart(request):
             # Create and save notification item for this user
 
             new_notification = Notification(
-                notification_body="There are not enough stocks of this item.", user=request.user)
+                notification_body="There are not enough stocks of this item.", user=request.user, line_item_id=line_item.line_item)
 
             new_notification.save()
 
@@ -705,7 +705,7 @@ def putInLocker(request):
 
     # Create and save notification that is linked to the buyer's id and line_item, telling them the item has been dropped off
     dropped_off_notification = Notification(
-        notification_body="This item has been dropped off.", user=buyer_id, line_item_id=line_item.line_item)
+        notification_body="This item has been dropped off.", user_id=buyer_id, line_item_id=line_item.line_item)
 
     return HttpResponse('0', content_type='text/plain')
 
@@ -753,6 +753,11 @@ def pickUpItem(request):
 
     data = json.loads(request.body)
     line_item = LineItem.objects.get(line_item=data['line_item'])
+    # item = Item.objects.get(item_id=line_item.item_id)
+    # seller_id = User.objects.get(id=item.user_id).id
+
+    # Combining above two lines of query code into one line
+    seller_id = User.objects.filter(item__item_id=line_item.item_id)[0]
 
     # check if the user that is associated with the line_item(buyer) and the logged in user is the same user
     # Get Buyer id from invoice object attached to the line_item
@@ -766,11 +771,15 @@ def pickUpItem(request):
 
         return HttpResponse('-4', content_type='text/plain')
 
-    # With the line item id, query for the line item and change its status from 2 to 3
+    # With the line item id, query for the line item and change its status from 3 to 4
 
     line_item.status_id = 4
 
     line_item.save()
+
+    # Send a notification to the seller that the item has been picked up
+    picked_up_notification = Notification(
+        notification_body="This item has been picked up.", user_id=seller_id, line_item_id=line_item.line_item)
 
     # This is where method that checks if there are other line items in invoice that are incomplete
     CheckLineItemStatus(invoice.invoice_id)
@@ -939,7 +948,6 @@ def getPostMessage(request):
 def submittedLineItem(request):
 
     # Needed data = logged in user_id
-
     # Check if user is logged in
     if not request.user.is_authenticated:
         return HttpResponse('-1', content_type='text/plain')
@@ -959,13 +967,12 @@ def submittedLineItem(request):
     line_items_submitted = line_item.objects.filter(
         item__user_id=user_id, status_id__gte=2)
 
-    data = [None] * len(items_submitted)
+    data = [None] * len(line_items_submitted)
 
-    for i in range(0, len(items_submitted)):
+    for i in range(0, len(line_items_submitted)):
 
         # This part was written to get buyer id from each line_item
-        # For loop within a for loop: very bad. Is there an alternative?
-        invoice_id = line_items.submitted[i].invoice_id
+        invoice_id = line_items_submitted[i].invoice_id
         buyer_id = Invoice.objects.get(invoice_id=invoice_id).user_id
 
         data[i] = {'line_item_id': line_items_submitted[i].line_item, 'item_id': line_items_submitted[i].item_id,
