@@ -926,3 +926,43 @@ def getPostMessage(request):
         else:
 
             return HttpResponse('-9', content_type='text/plain')
+
+
+def submittedLineItem(request):
+
+    # Needed data = logged in user_id
+
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # logged in user's id
+    user_id = request.user.id
+
+    # Pull line items that is linked to an item that is linked to this user's user id that has a status of 2 or higher
+    # How to reach out to seller id with line item
+    # line_item -> item -> user_id
+
+    # How to reach out to buyer id with line item
+    # line_item -> invoice -> user_id
+    # How do I present buyer_id to each line_item_submitted?
+
+    # All items that have been submitted(status >= 2)
+    line_items_submitted = line_item.objects.filter(
+        item__user_id=user_id, status_id__gte=2)
+
+    data = [None] * len(items_submitted)
+
+    for i in range(0, len(items_submitted)):
+
+        # This part was written to get buyer id from each line_item
+        # For loop within a for loop: very bad. Is there an alternative?
+        invoice_id = line_items.submitted[i].invoice_id
+        buyer_id = Invoice.objects.get(invoice_id=invoice_id).user_id
+
+        data[i] = {'line_item_id': line_items_submitted[i].line_item, 'item_id': line_items_submitted[i].item_id,
+                   'requested_quantity': line_items_submitted[i].quantity, 'status_id': line_items_submitted[i].status_id, 'buyer_id': buyer_id}
+
+    data = json.dumps(data)
+
+    return HttpResponse(data, content_type='application/json')
