@@ -12,7 +12,7 @@ class UserAdditionalInfo(models.Model):
     image = models.ImageField(blank=True, null=True)
 
     def __str__(self):
-        return self.user_id
+        return str(self.user)
 
 
 class Item(models.Model):
@@ -84,7 +84,7 @@ class Notification(models.Model):
         return self.notification_body
 
 
-class Messages(models.Model):
+class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     line_item = models.ForeignKey(LineItem, on_delete=models.CASCADE)
     message_body = models.CharField(max_length=255)
