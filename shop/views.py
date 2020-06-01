@@ -73,10 +73,10 @@ def registerUser(request):
         # Check if there is a duplicate email address
 
         # Query for any user with the entered email address
-        existing_user_with_same_email = User.objects.get(email=email)
+        existing_user_with_same_email = User.objects.filter(email=email)
 
         # Exit the method and return a message if there are any users with that email already
-        if existing_user_with_same_email:
+        if len(existing_user_with_same_email) > 0:
             return HttpResponse('-8', content_type='text/plain')
 
         username = data['username']
@@ -88,6 +88,9 @@ def registerUser(request):
 
         new_user = User.objects.create_user(username, email, password)
         new_user.save()
+
+        new_user_additionalInfo = UserAdditionalInfo(user_id=new_user.id)
+        new_user_additionalInfo.save()
 
         print('User has been registered successfully')
 
@@ -466,6 +469,14 @@ def getPostCart(request):
 
             # Cart
             current_cart = queryCart(request)
+
+            # Check if the picked item belongs to the current logged in user. If so, terminate process and throw an error code
+            item_id = data['item_id']
+            item_owner_id = Item.objects.get(item_id=item_id).user_id
+            current_user_id = request.user.id
+
+            if item_owner_id == current_user_id:
+                return HttpResponse('-10', content_type='text/plain')
 
             # Check if item_id input is of the right data type: int
             if not type(data['item_id']) == int:
@@ -993,24 +1004,30 @@ def submittedLineItem(request):
 # Method to rate the user based on the transaction. POST method
 def rateUser(request):
 
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
     data = json.loads(request.body)
 
     line_item_id = data['line_item_id']  # int
     rating = data['rating']  # boolean
 
-    line_item = LineItem.objects.get(id=line_item_id)
+    line_item = LineItem.objects.get(line_item=line_item_id)
     item_id = line_item.item_id
     item = Item.objects.get(item_id=item_id)
     item_owner_id = item.user_id
+    item_owner_additional_info = UserAdditionalInfo.objects.get(
+        user_id=item_owner_id)
 
     invoice_id = line_item.invoice_id
     invoice = Invoice.objects.get(invoice_id=invoice_id)
     invoice_owner_id = invoice.user_id
-    user_id = request.user.id
+    print(invoice_owner_id)
+    invoice_owner_additional_info = UserAdditionalInfo.objects.get(
+        user_id=invoice_owner_id)
 
-    # Check if user is logged in
-    if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+    user_id = request.user.id
 
     # if the current user matches the item(retrieved from line_item) owner, this user is the seller.
     # Therefore the rating will count towards the buyer's rating
@@ -1018,11 +1035,12 @@ def rateUser(request):
         invoice_owner = User.objects.get(id=invoice_owner_id)
 
         if rating:  # If the rating is true
-            invoice_owner.thumbs_up = invoice_owner.thumbs_up + 1
-            invoice_owner.save()
+            # Create UserAdditionalInfo object with FK of the buyer's id
+            invoice_owner_additional_info.thumbs_up += 1
+            invoice_owner_additional_info.save()
         else:
-            invoice_owner.thumbs_down = invoice_owner.thumbs_down + 1
-            invoice_owner.save()
+            invoice_owner_additional_info.thumbs_down += 1
+            invoice_owner_additional_info.save()
 
     # If that is not the case, the user is the buyer,
     # Therefore the rating should count towards the seller's rating
@@ -1030,10 +1048,10 @@ def rateUser(request):
         item_owner = User.objects.get(id=item_owner_id)
 
         if rating:  # If the rating is true
-            item_owner.thumbs_up = item_owner.thumbs_up + 1
-            item_owner.save()
+            item_owner_additional_info.thumbs_up += 1
+            item_owner_additional_info.save()
         else:
-            item_owner.thumbs_down = item_owner.thumbs_down + 1
-            item_owner.save()
+            item_owner_additional_info.thumbs_down += 1
+            item_owner_additional_info.save()
 
     return HttpResponse('0', content_type='text/plain')
