@@ -188,7 +188,9 @@ def getPostItem(request):
             requested_item_id = request.GET.get('item_id')
 
             # If param is not int, exit method and return error message
-            if not type(requested_item_id) == int:
+            try:
+                int(requested_item_id)
+            except:
                 return HttpResponse('-7', content_type='text/plain')
 
             # Query for any item that has the same item_id as the passed in params
