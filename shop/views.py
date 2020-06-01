@@ -60,6 +60,32 @@ def getUserInfo(request):
         return HttpResponse(data, content_type='application/json')
 
 
+# Fetch currently logged in user's info
+def getLoggedInUserInfo(request):
+
+    # Check if someone is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # Get currently logged in user object
+    user = request.user
+
+    user_id = request.user.id
+    username = request.user.username
+    first_name = request.user.first_name
+    last_name = request.user.last_name
+    email = request.user.email
+    date_joined = request.user.date_joined
+    last_login = request.user.last_login
+
+    data = {'user_id': user_id, 'username': username, 'first_name': first_name,
+            'last_name': last_name, 'email': email, 'date_joined': str(date_joined), 'last_login': str(last_login)}
+
+    data = json.dumps(data)
+
+    return HttpResponse(data, content_type='application/json')
+
+
 # Registration
 def registerUser(request):
 
@@ -450,7 +476,12 @@ def getPostCart(request):
             # Create dict of line items in cart and append them to the empty array created above
             for i in range(0, len(lineItems)):
 
-                data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id,
+                # Per one item, query for its item name and item image
+                item = Item.objects.get(item_id=lineItems[i].item_id)
+                item_name = item.name
+                item_image = item.image
+
+                data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id, 'item_name': item_name, 'item_image': str(item_image),
                            'line_item_price': float(lineItems[i].line_item_price), 'quantity': lineItems[i].quantity, 'status': lineItems[i].status_id}
 
             # Convert the array into transferable json data
