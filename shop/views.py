@@ -40,7 +40,7 @@ def getUserInfo(request):
             # When the query matched no data
             else:
 
-                return HttpResponse('-5', content_type='text/plain')
+                return HttpResponse({"status_code": -5, "message": "No info retrieved"}, content_type='application/json')
 
         # Query for all Users when there were no params given
         Users = User.objects.all().order_by()
@@ -65,7 +65,7 @@ def getLoggedInUserInfo(request):
 
     # Check if someone is logged in
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     # Get currently logged in user object
     user = request.user
@@ -97,7 +97,7 @@ def registerUser(request):
         email = data['email']
         # Check if user has entered wrong datatype for email
         if not type(email) == str:
-            return HttpResponse('-7', content_type='text/plain')
+            return HttpResponse({"status_code": -7, "message": "Wrong data type input"}, content_type='application/json')
 
         # Check if there is a duplicate email address
 
@@ -106,12 +106,12 @@ def registerUser(request):
 
         # Exit the method and return a message if there are any users with that email already
         if len(existing_user_with_same_email) > 0:
-            return HttpResponse('-8', content_type='text/plain')
+            return HttpResponse({"status_code": -8, "message": "Duplicate entry(username, email)"}, content_type='application/json')
 
         username = data['username']
         # Check if user has entered wrong datatype for username
         if not type(username) == str:
-            return HttpResponse('-7', content_type='text/plain')
+            return HttpResponse({"status_code": -7, "message": "Wrong data type input"}, content_type='application/json')
 
         password = data['password']
 
@@ -138,16 +138,16 @@ def registerUser(request):
 
         new_cart.save()
 
-        return HttpResponse('0', content_type='text/plain')
+        return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
     except(KeyError):
 
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     # Throw an exception when there is a same registered username
     except(IntegrityError):
 
-        return HttpResponse('-8', content_type='text/plain')
+        return HttpResponse({"status_code": -8, "message": "Duplicate entry(username, email)"}, content_type='application/json')
 
 
 def userLogin(request):
@@ -164,20 +164,20 @@ def userLogin(request):
             # Save user info to session
 
             login(request, user)
-            return HttpResponse('0', content_type='text/plain')
+            return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
         else:
-            return HttpResponse('-1', content_type='text/plain')
+            return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     except(KeyError):
 
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
 
 # User Logout
 def userLogout(request):
     logout(request)
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 # Retrieve or add Item data
@@ -204,11 +204,11 @@ def getPostItem(request):
 
                 data = json.dumps(data)
 
-                return HttpResponse(data, content_type='text/plain')
+                return HttpResponse(data, content_type='application/json')
 
             except(KeyError):
 
-                return HttpResponse('-6', content_type='text/plain')
+                return HttpResponse({"status_code": -6, "message": "Key error"}, content_type='application/json')
 
         # If a user is searching with item name:
         elif request.GET.get('item_id'):
@@ -220,7 +220,7 @@ def getPostItem(request):
             try:
                 int(requested_item_id)
             except:
-                return HttpResponse('-7', content_type='text/plain')
+                return HttpResponse({"status_code": -7, "message": "Wrong data type input"}, content_type='application/json')
 
             # Query for any item that has the same item_id as the passed in params
             Items = Item.objects.filter(
@@ -238,11 +238,11 @@ def getPostItem(request):
 
                 data = json.dumps(data)
 
-                return HttpResponse(data, content_type='text/plain')
+                return HttpResponse(data, content_type='application/json')
 
             except(KeyError):
 
-                return HttpResponse('-6', content_type='text/plain')
+                return HttpResponse({"status_code": -6, "message": "Key error"}, content_type='application/json')
 
         # If there is no GET params given, return all the existing items
         Items = Item.objects.order_by()
@@ -264,7 +264,7 @@ def getPostItem(request):
         # Check if user is logged in. If not, exit and return -1
         if not request.user.is_authenticated:
 
-            return HttpResponse('-1', content_type='text/plain')
+            return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
         # Parse in the data sent by user
         data = json.loads(request.body)
@@ -284,7 +284,7 @@ def getPostItem(request):
 
             if not item_owner_id == request.user.id:
 
-                return HttpResponse('-3', content_type='text/plain')
+                return HttpResponse({"status_code": -3, "message": "User id does not match the item's seller id"}, content_type='application/json')
 
             # Iterate through the posted data to see which part of the data the user wishes to change.
             # Only change the field of a data that has been passed in
@@ -318,7 +318,7 @@ def getPostItem(request):
 
         print('A New item has been added successfully')
 
-        return HttpResponse('0', content_type='text/plain')
+        return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 # Retreive or add invoice data
@@ -352,7 +352,7 @@ def getPostInvoice(request):
 
         else:
             # User is not logged in
-            return HttpResponse('-1', content_type='text/plain')
+            return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
         # When there is a specified query string(Is this necessary?? Ability to look at other people's invoice history??)
         if request.GET.get('id'):
@@ -382,7 +382,7 @@ def getPostInvoice(request):
 
             else:
 
-                return HttpResponse('-1', content_type='text/plain')
+                return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
         Invoices = Invoice.objects.all().order_by()
 
@@ -416,18 +416,18 @@ def getPostInvoice(request):
 
     #         print('Invoice has been added successfully')
 
-    #         return HttpResponse('0', content_type='text/plain')
+    #         return HttpResponse('0', content_type='application/json')
 
     #     except(KeyError):
     #         print("Key error")
-    #         return HttpResponse('-1', content_type='text/plain')
+    #         return HttpResponse('-1', content_type='application/json')
 
 
 def queryCart(request):
 
     if not request.user.is_authenticated:
 
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     current_cart = Invoice.objects.get(
         user_id=request.user.id, status_id=1)
@@ -456,7 +456,7 @@ def getPostCart(request):
     # User needs to be logged in, or exits the method and returns -1
     if not request.user.is_authenticated:
 
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     if request.method == 'GET':
 
@@ -494,7 +494,7 @@ def getPostCart(request):
 
         except(KeyError):
 
-            return HttpResponse('-1', content_type='text/plain')
+            return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     elif request.method == 'POST':
 
@@ -512,18 +512,18 @@ def getPostCart(request):
             current_user_id = request.user.id
 
             if item_owner_id == current_user_id:
-                return HttpResponse('-10', content_type='text/plain')
+                return HttpResponse({"status_code": -10, "message": "Attempted to add own item into cart"}, content_type='application/json')
 
             # Check if item_id input is of the right data type: int
 
             # try:
             #     int(data['item_id'])
             # except:
-            #     return HttpResponse('-7', content_type='text/plain')
+            #     return HttpResponse('-7', content_type='application/json')
 
             if not type(data['item_id']) == int:
 
-                return HttpResponse('-7', content_type='text/plain')
+                return HttpResponse({"status_code": -7, "message": "Wrong data type input"}, content_type='application/json')
 
             # Check if there is already an entry with  line_item_id of the data sent by the user
             original_entry_list = LineItem.objects.filter(
@@ -540,7 +540,7 @@ def getPostCart(request):
                     # Check if quantity input is of right data type: int
                     if not type(data['quantity']) == int:
 
-                        return HttpResponse('-7', content_type='text/plain')
+                        return HttpResponse({"status_code": -7, "message": "Wrong data type input"}, content_type='application/json')
 
                     original_entry.quantity = data['quantity']
 
@@ -565,7 +565,7 @@ def getPostCart(request):
                 # Check if both of the passed in data are of the right type: int
                 if not type(item_id) == int or not type(quantity) == int:
 
-                    return HttpResponse('-7', content_type='text/plain')
+                    return HttpResponse({"status_code": -7, "message": "Wrong data type input"}, content_type='application/json')
 
                 # Calculate the total line_item_price
                 line_item_price = updateLineItemPrice(quantity, item_id)
@@ -578,12 +578,12 @@ def getPostCart(request):
 
             print('The lineItem has been added to the cart successfully')
 
-            return HttpResponse('0', content_type='text/plain')
+            return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
         except(KeyError):
 
             print("There was a key error")
-            return HttpResponse('-1', content_type='text/plain')
+            return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
 
 # Method to remove item from cart
@@ -591,7 +591,7 @@ def deleteLineItem(request):
     # Check if a user is logged in
     if not request.user.is_authenticated:
 
-        return HttpResponse('login required', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     data = json.loads(request.body)
 
@@ -605,7 +605,7 @@ def deleteLineItem(request):
         buyer = invoice.user_id
 
         if not invoice.user_id == request.user.id:
-            return HttpResponse('-1', content_type='text/plain')
+            return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
         line_item.delete()
 
@@ -623,7 +623,7 @@ def deleteLineItem(request):
     for line_item in line_items:
         line_item.delete()
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 def submitCart(request):
@@ -631,7 +631,7 @@ def submitCart(request):
     # Check if a user is logged in
     if not request.user.is_authenticated:
 
-        return HttpResponse('login required', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     # Query and check if there are more item stocks than requested quantity of the line item
 
@@ -651,7 +651,7 @@ def submitCart(request):
     # If there are no items ready for purchase in the cart, abort submitting
     if len(line_items_in_cart_not_saved) == 0:
 
-        return HttpResponse('No lineitems to submit', content_type='text/plain')
+        return HttpResponse({"status_code": -11, "message": "No line item with status 1 to submit"}, content_type='application/json')
 
     # Do stock check first here and return -1 error if stock is less than quantity
     for line_item in line_items_in_cart:
@@ -670,7 +670,7 @@ def submitCart(request):
 
             new_notification.save()
 
-            return HttpResponse('-2', content_type='text/plain')
+            return HttpResponse({"status_code": -2, "message": "Not enough stock"}, content_type='application/json')
 
     # Create a new cart under this user's user_id
 
@@ -726,7 +726,7 @@ def submitCart(request):
 
     cart.save()
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 # Method that is fired when seller puts an item into a locker
@@ -735,7 +735,7 @@ def putInLocker(request):
     # Check if seller is logged in
     if not request.user.is_authenticated:
 
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     data = json.loads(request.body)
     line_item = LineItem.objects.get(line_item=data['line_item'])
@@ -751,7 +751,7 @@ def putInLocker(request):
 
     if not item_seller_id == request.user.id:
 
-        return HttpResponse('-3', content_type='text/plain')
+        return HttpResponse({"status_code": -3, "message": "User id does not match the item's seller id"}, content_type='application/json')
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
@@ -767,7 +767,7 @@ def putInLocker(request):
     dropped_off_notification = Notification(
         notification_body="This item has been dropped off.", user_id=buyer_id, line_item_id=line_item.line_item)
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 # Method to check of other lineitems in that specific data are all picked up or not
@@ -807,7 +807,7 @@ def pickUpItem(request):
 
     if not request.user.is_authenticated:
 
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": 0, "message": "Login required"}, content_type='application/json')
 
     # line item id will be posted by the buyer
 
@@ -829,7 +829,7 @@ def pickUpItem(request):
 
     if not item_buyer_id == request.user.id:
 
-        return HttpResponse('-4', content_type='text/plain')
+        return HttpResponse({"status_code": -4, "message": "User's id does not match the item's buyer id"}, content_type='application/json')
 
     # With the line item id, query for the line item and change its status from 3 to 4
 
@@ -844,7 +844,7 @@ def pickUpItem(request):
     # This is where method that checks if there are other line items in invoice that are incomplete
     CheckLineItemStatus(invoice.invoice_id)
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 # Method to flag different line items for 'save for later' status
@@ -855,7 +855,7 @@ def toggleSave(request):
 
     # Check if the user is logged in. If not, return -1 and exit
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     # Query for the invoice_id of the current cart
     cart = Invoice.objects.get(user_id=request.user.id, status_id=1)
@@ -865,7 +865,7 @@ def toggleSave(request):
 
     # Check if the two user_ids match
     if not request.user.id == cart_owner:
-        return HttpResponse('-4', content_type='text/plain')
+        return HttpResponse({"status_code": -4, "message": "User's id does not match the item's buyer id"}, content_type='application/json')
 
     line_item = LineItem.objects.get(line_item=line_item_id)
     # if the status of the lineitem is 1, switch to 6
@@ -880,14 +880,14 @@ def toggleSave(request):
     # Update and save the data
     line_item.save()
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 def getNotification(request):
 
     # Check if the user is logged in
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": 0, "message": "Login required"}, content_type='application/json')
 
     # Query for all the notification data with the logged in user's user id
     notifications = Notification.objects.filter(user_id=request.user.id)
@@ -911,7 +911,7 @@ def deleteNotification(request):
 
     # Check if the user is logged in
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     data = json.loads(request.body)
 
@@ -928,14 +928,14 @@ def deleteNotification(request):
         for notification in notifications:
             notification.delete()
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
 
 def getPostMessage(request):
 
     # Check if user is logged in
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     if request.method == 'GET':
 
@@ -971,7 +971,7 @@ def getPostMessage(request):
 
         else:
 
-            return HttpResponse('-9', content_type='text/plain')
+            return HttpResponse({"status_code": -9, "message": "The logged in user does not have the authority"}, content_type='application/json')
 
     elif request.method == 'POST':
 
@@ -998,11 +998,11 @@ def getPostMessage(request):
             # Save the newly created message object
             new_message.save()
 
-            return HttpResponse('0', content_type='text/plain')
+            return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
 
         else:
 
-            return HttpResponse('-9', content_type='text/plain')
+            return HttpResponse({"status_code": -9, "message": "The logged in user does not have the authority"}, content_type='application/json')
 
 
 def submittedLineItem(request):
@@ -1010,7 +1010,7 @@ def submittedLineItem(request):
     # Needed data = logged in user_id
     # Check if user is logged in
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     # logged in user's id
     user_id = request.user.id
@@ -1048,7 +1048,7 @@ def rateUser(request):
 
     # Check if user is logged in
     if not request.user.is_authenticated:
-        return HttpResponse('-1', content_type='text/plain')
+        return HttpResponse({"status_code": -1, "message": "Login required"}, content_type='application/json')
 
     data = json.loads(request.body)
 
@@ -1096,4 +1096,4 @@ def rateUser(request):
             item_owner_additional_info.thumbs_down += 1
             item_owner_additional_info.save()
 
-    return HttpResponse('0', content_type='text/plain')
+    return HttpResponse({"status_code": 0, "message": "Success"}, content_type='application/json')
