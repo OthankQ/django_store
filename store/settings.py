@@ -59,7 +59,7 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:8000',
-] # If this is used, then not need to use `CORS_ORIGIN_ALLOW_ALL = True`
+]  # If this is used, then not need to use `CORS_ORIGIN_ALLOW_ALL = True`
 CORS_ORIGIN_REGEX_WHITELIST = [
     'http://localhost:8000',
 ]
@@ -142,3 +142,8 @@ STATIC_URL = '/static/'
 MEDIA_URL = "/images/"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/images')
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
