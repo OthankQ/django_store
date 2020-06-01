@@ -1,16 +1,16 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification, Messages
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.db import IntegrityError
 from datetime import datetime
 import json
 
 
-def GetUserInfo(request):
+def getUserInfo(request):
     if request.method == 'GET':
-        print(request.session)
 
         # When query string exists
         if request.GET.get('username'):
@@ -18,7 +18,7 @@ def GetUserInfo(request):
             # Extract the parameter and save it to requested_id
             requested_username = request.GET.get('username')
 
-            # Query for the row that matches the criteria
+            # Query for the data that matches the criteria
             requested_user = User.objects.get(
                 username=requested_username)
 
@@ -34,20 +34,21 @@ def GetUserInfo(request):
                 # Return that data
                 return HttpResponse(data, content_type='application/json')
 
+            # When the query matched no data
             else:
 
                 return HttpResponse('-5', content_type='text/plain')
 
-        # Query for all Users
-        Users = User.objects.all().order_by().values()
+        # Query for all Users when there were no params given
+        Users = User.objects.all().order_by()
 
         # Create empty array to store data
         data = [None] * len(Users)
 
         # For each entry, create a dictionary and insert it into data array
         for i in range(0, len(Users)):
-            data[i] = {'user_id': Users[i]['user_id'], 'user_name': Users[i]
-                       ['name'], 'phone': Users[i]['phone_number']}
+            data[i] = {'user_id': Users[i].user_id, 'user_name': Users[i]
+                       .name, 'phone': Users[i].phone_number}
 
         # Convert python dictionary to passable json data
         data = json.dumps(data)
@@ -55,21 +56,41 @@ def GetUserInfo(request):
         # Return the queried and converted data
         return HttpResponse(data, content_type='application/json')
 
-    # Registration
 
+# Registration
+def registerUser(request):
 
-def RegisterUser(request):
-
+    # Load passed json into python dict
     data = json.loads(request.body)
 
     try:
 
-        username = data['username']
         email = data['email']
+        # Check if user has entered wrong datatype for email
+        if not type(email) == str:
+            return HttpResponse('-7', content_type='text/plain')
+
+        # Check if there is a duplicate email address
+
+        # Query for any user with the entered email address
+        existing_user_with_same_email = User.objects.filter(email=email)
+
+        # Exit the method and return a message if there are any users with that email already
+        if len(existing_user_with_same_email) > 0:
+            return HttpResponse('-8', content_type='text/plain')
+
+        username = data['username']
+        # Check if user has entered wrong datatype for username
+        if not type(username) == str:
+            return HttpResponse('-7', content_type='text/plain')
+
         password = data['password']
 
         new_user = User.objects.create_user(username, email, password)
         new_user.save()
+
+        new_user_additionalInfo = UserAdditionalInfo(user_id=new_user.id)
+        new_user_additionalInfo.save()
 
         print('User has been registered successfully')
 
@@ -94,8 +115,13 @@ def RegisterUser(request):
 
         return HttpResponse('-1', content_type='text/plain')
 
+    # Throw an exception when there is a same registered username
+    except(IntegrityError):
 
-def UserLogin(request):
+        return HttpResponse('-8', content_type='text/plain')
+
+
+def userLogin(request):
     try:
         data = json.loads(request.body)
 
@@ -115,18 +141,18 @@ def UserLogin(request):
             return HttpResponse('-1', content_type='text/plain')
 
     except(KeyError):
-        print("Key error")
+
         return HttpResponse('-1', content_type='text/plain')
 
 
 # User Logout
-def UserLogout(request):
+def userLogout(request):
     logout(request)
     return HttpResponse('0', content_type='text/plain')
 
 
 # Retrieve or add Item data
-def GetPostItem(request):
+def getPostItem(request):
 
     if request.method == 'GET':
 
@@ -147,8 +173,6 @@ def GetPostItem(request):
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
                                str(Items[i].price), 'stock': Items[i].stock}
 
-                print(data)
-
                 data = json.dumps(data)
 
                 return HttpResponse(data, content_type='text/plain')
@@ -160,20 +184,26 @@ def GetPostItem(request):
         # If a user is searching with item name:
         elif request.GET.get('item_id'):
 
+            # Pull item_id from passed in GET params
             requested_item_id = request.GET.get('item_id')
-            print(requested_item_id)
+
+            # If param is not int, exit method and return error message
+            if not type(requested_item_id) == int:
+                return HttpResponse('-7', content_type='text/plain')
+
+            # Query for any item that has the same item_id as the passed in params
             Items = Item.objects.filter(
                 item_id=requested_item_id)
-            print(len(Items))
+
             try:
+                # Create an empty array that has the length of number of queried data
                 data = [None] * len(Items)
 
+                # Create an array of dict for each queried data
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
                                str(Items[i].price), 'stock': Items[i].stock}
-
-                # print(data)
 
                 data = json.dumps(data)
 
@@ -183,6 +213,7 @@ def GetPostItem(request):
 
                 return HttpResponse('-6', content_type='text/plain')
 
+        # If there is no GET params given, return all the existing items
         Items = Item.objects.order_by()
 
         data = [None] * len(Items)
@@ -196,8 +227,10 @@ def GetPostItem(request):
 
         return HttpResponse(data, content_type='application/json')
 
+    # POST method (insert or update)
     elif request.method == 'POST':
 
+        # Check if user is logged in. If not, exit and return -1
         if not request.user.is_authenticated:
 
             return HttpResponse('-1', content_type='text/plain')
@@ -207,12 +240,13 @@ def GetPostItem(request):
 
         # Check if there are any existing item with matching item_id
 
-        # If there is item_id within passed data, it is an update
         # Update
+
+        # If there is item_id within passed data, it is an update
         if 'item_id' in data.keys():
 
-            original_entry = Item.objects.filter(
-                item_id=data['item_id'])[0]
+            original_entry = Item.objects.get(
+                item_id=data['item_id'])
 
             # Check if the owner of this item and the logged-in user is the same user_id
             item_owner_id = original_entry.user_id
@@ -221,6 +255,8 @@ def GetPostItem(request):
 
                 return HttpResponse('-3', content_type='text/plain')
 
+            # Iterate through the posted data to see which part of the data the user wishes to change.
+            # Only change the field of a data that has been passed in
             if 'stock' in data.keys():
                 original_entry.stock = data['stock']
 
@@ -233,24 +269,13 @@ def GetPostItem(request):
             if 'price' in data.keys():
                 original_entry.price = data['price']
 
-            # stock = indexable_original_entry['stock']
-            # name = indexable_original_entry['name']
-            # item_id = indexable_original_entry['item_id']
-            # price = indexable_original_entry['price']
-            # user_id = request.user.id
-
-            # parsed_data = Item(
-            #     item_id=item_id, stock=stock, name=name, price=price, user_id=user_id)
-
             original_entry.save()
 
         # Post new item
         else:
 
-            # item_id = data['item_id']
             name = data['name']
             user_id = request.user.id
-            # desc = data['desc']
             price = data['price']
             # image_id = data['image_id']
             stock = data['stock']
@@ -266,34 +291,43 @@ def GetPostItem(request):
 
 
 # Retreive or add invoice data
-def GetPostInvoice(request):
+def getPostInvoice(request):
     if request.method == 'GET':
         # BLAIR CODE!!!
+
+        # Check if this dude is logged in
         if request.user.is_authenticated:
-            # Check if this dude is logged in
+
+            # Query for all the invoice under this user's id
             requested_invoices = Invoice.objects.filter(
                 user_id=request.user.id)
-            # Query for all the invoice under this user's id
-            invoice_array = list()
+
+            # Create an empty array with the length that is equivalent to the number of queried requested_invoices
+            invoice_array = [None] * len(requested_invoices)
+
+            # For each queried invoices, create a dict and append them to the empty array created above
             for invoice in requested_invoices:
+
                 data = {'invoice_id': invoice.invoice_id,
                         'user_id': invoice.user_id, 'date_created': str(invoice.date), 'status': str(invoice.status)}
-                # Convert the data to transferable json
-                # data = json.dumps(data)
+
                 invoice_array.append(data)
+
+            # Convert array of dict to transferable json
             invoice_json = json.dumps(invoice_array)
+
+            # Return the json
             return HttpResponse(invoice_json, content_type='application/json')
 
         else:
             # User is not logged in
             return HttpResponse('-1', content_type='text/plain')
 
-        # When there is a specified query string
+        # When there is a specified query string(Is this necessary?? Ability to look at other people's invoice history??)
         if request.GET.get('id'):
             requested_user_id = request.GET.get('id')
             requested_invoices = Invoice.objects.filter(
                 user_id=requested_user_id)
-            print(requested_invoices)
 
             if requested_invoices:
 
@@ -333,58 +367,62 @@ def GetPostInvoice(request):
 
         return HttpResponse(data, content_type='application/json')
 
-    elif request.method == 'POST':
+    # Commenting out POST request for invoice. There is no need.
 
-        try:
-            data = json.loads(request.body)
-            invoice_id = data['invoice_id']
-            user_id = data['user_id']
-            date = data['date']
-            status = data['status']
+    # elif request.method == 'POST':
 
-            parsed_data = Invoice(
-                invoice_id=invoice_id, user_id=user_id, date=date, status=status)
+    #     try:
+    #         data = json.loads(request.body)
+    #         invoice_id = data['invoice_id']
+    #         user_id = data['user_id']
+    #         date = data['date']
+    #         status = data['status']
 
-            parsed_data.save()
+    #         parsed_data = Invoice(
+    #             invoice_id=invoice_id, user_id=user_id, date=date, status=status)
 
-            print('Invoice has been added successfully')
+    #         parsed_data.save()
 
-            return HttpResponse('0', content_type='text/plain')
+    #         print('Invoice has been added successfully')
 
-        except(KeyError):
-            print("Key error")
-            return HttpResponse('-1', content_type='text/plain')
+    #         return HttpResponse('0', content_type='text/plain')
+
+    #     except(KeyError):
+    #         print("Key error")
+    #         return HttpResponse('-1', content_type='text/plain')
 
 
-def QueryCart(request):
+def queryCart(request):
 
     if not request.user.is_authenticated:
 
         return HttpResponse('-1', content_type='text/plain')
 
-    current_cart = Invoice.objects.filter(
-        user_id=request.user.id, status_id=1)[0]
+    current_cart = Invoice.objects.get(
+        user_id=request.user.id, status_id=1)
 
     return current_cart
 
 
-def UpdateLineItemPrice(quantity, item_id):
+def updateLineItemPrice(quantity, item_id):
+
     # query for that specific line item using item_id
-    item = Item.objects.filter(item_id=item_id).values()
+    item = Item.objects.get(item_id=item_id)
 
     # query for current item price of that item and store it in a variable
-    current_item_price = item[0]['price']
+    current_item_price = item.price
 
     # calculate the total price of the line item and store it in a variable
     calculated_line_item_price = current_item_price * quantity
-    # print(calculated_line_item_price)
+
     # Save that price into the existing row
     return calculated_line_item_price
 
 
-# Retrieve or add lineitem data
-def GetPostCart(request):
+# Retrieve or add lineitem data from cart(1) status invoice
+def getPostCart(request):
 
+    # User needs to be logged in, or exits the method and returns -1
     if not request.user.is_authenticated:
 
         return HttpResponse('-1', content_type='text/plain')
@@ -394,29 +432,28 @@ def GetPostCart(request):
         try:
 
             # Query for the 'cart' status invoice
-            # cart_status = InvoiceStatus.objects.filter(id=1).values()[0]
+            cart = Invoice.objects.get(
+                status_id=1, user_id=request.user.id)
 
-            cart = Invoice.objects.filter(
-                status_id=1, user_id=request.user.id)[0]
-            # print(cart)
-
-            # print(cart.invoice_id)
-            # print(cart)
-
+            # Query for every item existing in the cart
             lineItems = LineItem.objects.filter(
                 invoice_id=cart.invoice_id)
 
+            # Create an empty array with the length equivalent to existing line items in cart
             data = [None] * len(lineItems)
 
+            # Create dict of line items in cart and append them to the empty array created above
             for i in range(0, len(lineItems)):
 
                 data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id,
                            'line_item_price': float(lineItems[i].line_item_price), 'quantity': lineItems[i].quantity, 'status': lineItems[i].status_id}
 
+            # Convert the array into transferable json data
             data = json.dumps(data)
 
             print('Successfully fetched line items from current cart')
 
+            # Return the json data
             return HttpResponse(data, content_type='application/json')
 
         except(KeyError):
@@ -426,61 +463,72 @@ def GetPostCart(request):
     elif request.method == 'POST':
 
         try:
-            # Retrieve data from user request
 
+            # Retrieve data from user request
             data = json.loads(request.body)
 
-            # Check if there is already an entry with  line_item_id of the data sent by the user
-            # If there is already one, query for that data
-
             # Cart
+            current_cart = queryCart(request)
 
-            current_cart = QueryCart(request)
+            # Check if the picked item belongs to the current logged in user. If so, terminate process and throw an error code
+            item_id = data['item_id']
+            item_owner_id = Item.objects.get(item_id=item_id).user_id
+            current_user_id = request.user.id
 
+            if item_owner_id == current_user_id:
+                return HttpResponse('-10', content_type='text/plain')
+
+            # Check if item_id input is of the right data type: int
+            if not type(data['item_id']) == int:
+
+                return HttpResponse('-7', content_type='text/plain')
+
+            # Check if there is already an entry with  line_item_id of the data sent by the user
             original_entry_list = LineItem.objects.filter(
                 item_id=data['item_id'], invoice_id=current_cart.invoice_id)
 
+            # If there is already a same lineitem existing in cart, this is an update to quantity
             # Update
             if len(original_entry_list) > 0:
-                original_entry = original_entry_list[0]
 
-                # indexable_original_entry = list(original_entry)[0]
+                original_entry = original_entry_list[0]
 
                 if 'quantity' in data.keys():
 
+                    # Check if quantity input is of right data type: int
+                    if not type(data['quantity']) == int:
+
+                        return HttpResponse('-7', content_type='text/plain')
+
                     original_entry.quantity = data['quantity']
 
-                # line_item = original_entry.line_item
-                # quantity = original_entry.quantity
-                # item_id = original_entry.item_id
-                # invoice_id = original_entry.invoice_id
-                # status_id = 1
-
-                original_entry.line_item_price = UpdateLineItemPrice(
+                original_entry.line_item_price = updateLineItemPrice(
                     original_entry.quantity, original_entry.item_id)
+
                 original_entry.save()
 
-                # parsed_data = LineItem(
-                #     line_item=line_item, invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity, status_id=status_id)
+            # If there is no line_item with the same line_item_id in cart, it's a post
 
-            # Post
-
-            # There is no line_item with the same line_item_id
-
+             # Post(Putting items into your cart)
             else:
 
                 # Query for this user's cart
-
-                cart = Invoice.objects.filter(
-                    status_id=1, user_id=request.user.id)[0]
+                cart = Invoice.objects.get(
+                    status_id=1, user_id=request.user.id)
 
                 invoice_id = cart.invoice_id
-                # line_item_id = data['line_item_id']
                 item_id = data['item_id']
                 quantity = data['quantity']
 
-                line_item_price = UpdateLineItemPrice(quantity, item_id)
+                # Check if both of the passed in data are of the right type: int
+                if not type(item_id) == int or not type(quantity) == int:
 
+                    return HttpResponse('-7', content_type='text/plain')
+
+                # Calculate the total line_item_price
+                line_item_price = updateLineItemPrice(quantity, item_id)
+
+                # Create and save new lineitem data
                 new_line_item = LineItem(status_id=1,
                                          invoice_id=invoice_id, item_id=item_id, line_item_price=line_item_price, quantity=quantity)
 
@@ -496,7 +544,47 @@ def GetPostCart(request):
             return HttpResponse('-1', content_type='text/plain')
 
 
-def SubmitCart(request):
+# Method to remove item from cart
+def deleteLineItem(request):
+    # Check if a user is logged in
+    if not request.user.is_authenticated:
+
+        return HttpResponse('login required', content_type='text/plain')
+
+    data = json.loads(request.body)
+
+    # If line_item is given, and when the logged in user id matches the buyer's id, delete that one item
+    if 'line_item' in data.keys():
+
+        # Query for the lineitem using line_item and current cart(invoice) id
+        line_item = LineItem.objects.get(
+            line_item=data['line_item'], status_id=1)
+        invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
+        buyer = invoice.user_id
+
+        if not invoice.user_id == request.user.id:
+            return HttpResponse('-1', content_type='text/plain')
+
+        line_item.delete()
+
+    # If no line_item is given , query and delete everything in cart
+
+    # Check if logged in user and invoice's user id matches
+    logged_in_user_cart = Invoice.objects.filter(
+        user_id=request.user.id, status_id=1)
+
+    # Query everything in this user's invoice with a status of 1(cart)
+    line_items = LineItem.objects.filter(
+        status_id=1, invoice_id=logged_in_user_cart.invoice_id)
+
+    # Use a for loop to iterate through all the line_items and delete them
+    for line_item in line_items:
+        line_item.delete()
+
+    return HttpResponse('0', content_type='text/plain')
+
+
+def submitCart(request):
 
     # Check if a user is logged in
     if not request.user.is_authenticated:
@@ -508,11 +596,20 @@ def SubmitCart(request):
     # Query and change the status for every line item that was in the cart to 2
 
     # Get the id of current cart
-    current_cart_id = Invoice.objects.filter(
-        status_id=1, user_id=request.user.id)[0].invoice_id
+    current_cart_id = Invoice.objects.get(
+        status_id=1, user_id=request.user.id).invoice_id
 
     line_items_in_cart = LineItem.objects.filter(
         invoice=current_cart_id)
+
+    # Query for line items that has a status of 2(not saved)
+    line_items_in_cart_not_saved = LineItem.objects.filter(
+        invoice=current_cart_id, status_id=1)
+
+    # If there are no items ready for purchase in the cart, abort submitting
+    if len(line_items_in_cart_not_saved) == 0:
+
+        return HttpResponse('No lineitems to submit', content_type='text/plain')
 
     # Do stock check first here and return -1 error if stock is less than quantity
     for line_item in line_items_in_cart:
@@ -520,58 +617,18 @@ def SubmitCart(request):
         item_id = line_item.item_id
         quantity = line_item.quantity
 
-        item_stock = Item.objects.filter(item_id=item_id)[0].stock
+        item_stock = Item.objects.get(item_id=item_id).stock
 
         if item_stock < quantity:
 
             # Create and save notification item for this user
 
             new_notification = Notification(
-                notification_body="There are not enough stocks of this item.", user=request.user)
+                notification_body="There are not enough stocks of this item.", user=request.user, line_item_id=line_item.line_item)
 
             new_notification.save()
 
             return HttpResponse('-2', content_type='text/plain')
-
-    # Change status for lineitem and stocks for item
-    for line_item in line_items_in_cart:
-
-        # Query for the item of the line_item
-        item_id = line_item.item_id
-        quantity = line_item.quantity
-
-        item = Item.objects.filter(item_id=item_id)[0]
-        # item_stock = item.stock
-
-        # If there are more stocks than requested quantity, go through with changing the status
-
-        # line_item_id = line_item['line_item']
-        # line_item_price = line_item['line_item_price']
-        # quantity = line_item['quantity']
-        # invoice_id = line_item['invoice_id']
-        # item_id = line_item['item_id']
-        line_item.status_id = 2
-
-        # submitted_item = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-        #                           quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
-
-        line_item.save()
-
-        # update the stock for the item_stock
-        item.stock = item.stock - quantity
-        item.save()
-
-     # Query for the invoice with status of cart(1) and switch the status to paid(2)
-
-    cart = Invoice.objects.filter(
-        status_id=1, user_id=request.user.id)[0]
-
-    cart.status_id = 2
-
-    # submitted_cart = Invoice(
-    #     date=cart['date'], invoice_id=cart['invoice_id'], status_id=2, user_id=request.user.id)
-
-    cart.save()
 
     # Create a new cart under this user's user_id
 
@@ -580,20 +637,66 @@ def SubmitCart(request):
 
     new_cart.save()
 
+    # Change status for lineitem and stocks for item
+    for line_item in line_items_in_cart:
+
+        # Query for the item of the line_item
+        item_id = line_item.item_id
+        quantity = line_item.quantity
+        status = line_item.status_id
+
+        item = Item.objects.get(item_id=item_id)
+        seller_id = item.user_id
+
+        # If there are more stocks than requested quantity,
+        # and the status of the item is 1,
+        # go through with changing the status and calculating the item stocks
+        if status == 1:
+            line_item.status_id = 2
+
+            # Create a notification and send it to the seller of the item
+            seller_notification = Notification(
+                user_id=seller_id, notification_body="A buyer would like to purchase this item.", line_item_id=line_item.line_item)
+
+            seller_notification.save()
+
+            line_item.save()
+
+            # update the stock of the item and save the item
+            item.stock = item.stock - quantity
+            item.save()
+
+        # Change invoice_id of the line_item with a status of 6 to the one of the new cart
+        elif status == 5:
+
+            # Newly created cart
+            new_cart = Invoice.objects.filter(
+                user_id=request.user.id, status_id=1).order_by('-invoice_id')[0]
+            line_item.invoice_id = new_cart.invoice_id
+            line_item.save()
+
+    # Query for the invoice with status of cart(1) and switch the status to paid(2)
+    # Don't exactly now why this query gets more than 1? Maybe it didn't?
+    cart = Invoice.objects.get(
+        status_id=1, user_id=request.user.id, invoice_id=current_cart_id)
+
+    cart.status_id = 2
+
+    cart.save()
+
     return HttpResponse('0', content_type='text/plain')
 
 
 # Method that is fired when seller puts an item into a locker
-def PutInLocker(request):
+def putInLocker(request):
 
     # Check if seller is logged in
-
     if not request.user.is_authenticated:
 
         return HttpResponse('-1', content_type='text/plain')
 
     data = json.loads(request.body)
-    line_item = LineItem.objects.filter(line_item=data['line_item'])[0]
+    line_item = LineItem.objects.get(line_item=data['line_item'])
 
     # check if the user that is associated with the line_item and the logged in user is the same user
     # Pull the user id from the item object that is associated with this lineitem
@@ -610,21 +713,17 @@ def PutInLocker(request):
 
     # With the line item id, query for the line item and change its status from 2 to 3
 
-    line_item = LineItem.objects.filter(line_item=line_item.line_item)[0]
+    line_item = LineItem.objects.get(line_item=line_item.line_item)
 
-    # line_item_id = line_item['line_item']
-    # user = line_item['user']
-    # line_item_price = line_item['line_item_price']
-    # quantity = line_item['quantity']
-    # invoice_id = line_item['invoice_id']
-    # item_id = line_item['item_id']
-    # status_id = 3a
+    buyer_id = Invoice.objects.get(invoice_id=line_item.invoice_id).user_id
+
     line_item.status_id = 3
 
-    # item_put_in_locker = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-    #   quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
-
     line_item.save()
+
+    # Create and save notification that is linked to the buyer's id and line_item, telling them the item has been dropped off
+    dropped_off_notification = Notification(
+        notification_body="This item has been dropped off.", user_id=buyer_id, line_item_id=line_item.line_item)
 
     return HttpResponse('0', content_type='text/plain')
 
@@ -638,10 +737,7 @@ def CheckLineItemStatus(invoice_id):
 
     # Query for that invoice this line_item is in
 
-    # invoice = Invoice.objects.filter(invoice_id=invoice_id).values()[0]
-
     # Using that invoice_id, query all the line_items in that invoice
-    # print(invoice_id)
     other_line_items = LineItem.objects.filter(invoice_id=invoice_id)
 
     # Loop through all the queried line items and see if their statuses are all 3
@@ -656,23 +752,14 @@ def CheckLineItemStatus(invoice_id):
 
     if ready_for_completion:
 
-        # print('it runs till here')
+        invoice = Invoice.objects.get(invoice_id=invoice_id)
 
-        invoice = Invoice.objects.filter(invoice_id=invoice_id)[0]
-        # print(invoice)
-
-        # invoice_id = invoice['invoice_id']
-        # date = invoice['date']
         invoice.status_id = 3
-        # user_id = invoice['user_id']
-
-        # new_status_invoice = Invoice(
-        #     invoice_id=invoice_id, date=date, status_id=status_id, user_id=user_id)
 
         invoice.save()
 
 
-def PickUpItem(request):
+def pickUpItem(request):
 
     # Check if buyer is logged in
 
@@ -683,16 +770,17 @@ def PickUpItem(request):
     # line item id will be posted by the buyer
 
     data = json.loads(request.body)
-    # line_item = data['line_item']
-    line_item = LineItem.objects.filter(line_item=data['line_item'])[0]
+    line_item = LineItem.objects.get(line_item=data['line_item'])
+    # item = Item.objects.get(item_id=line_item.item_id)
+    # seller_id = User.objects.get(id=item.user_id).id
+
+    # Combining above two lines of query code into one line
+    seller_id = User.objects.filter(item__item_id=line_item.item_id)[0]
 
     # check if the user that is associated with the line_item(buyer) and the logged in user is the same user
     # Get Buyer id from invoice object attached to the line_item
-    invoice = Invoice.objects.filter(invoice_id=line_item.invoice_id)[0]
+    invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
     item_buyer_id = invoice.user_id
-
-    # line_item_buyer_id = LineItem.objects.filter(
-    #     user=request.user.id).values()[0]['user']
 
     # If the requested item's buyer is not the same as user, exit with -1
     # I imagine this part of the code is where it will be decided whether the buyer will be able to open the locker door or not
@@ -701,24 +789,269 @@ def PickUpItem(request):
 
         return HttpResponse('-4', content_type='text/plain')
 
-    # With the line item id, query for the line item and change its status from 2 to 3
+    # With the line item id, query for the line item and change its status from 3 to 4
 
-    # line_item = LineItem.objects.filter(line_item=line_item)[0]
-
-    # line_item_id = line_item['line_item']
-    # user = line_item['user']
-    # line_item_price = line_item['line_item_price']
-    # quantity = line_item['quantity']
-    # invoice_id = line_item['invoice_id']
-    # item_id = line_item['item_id']
     line_item.status_id = 4
-
-    # item_picked_up = LineItem(line_item=line_item_id, line_item_price=line_item_price,
-    #                           quantity=quantity, invoice_id=invoice_id, item_id=item_id, status_id=status_id)
 
     line_item.save()
 
+    # Send a notification to the seller that the item has been picked up
+    picked_up_notification = Notification(
+        notification_body="This item has been picked up.", user_id=seller_id, line_item_id=line_item.line_item)
+
     # This is where method that checks if there are other line items in invoice that are incomplete
     CheckLineItemStatus(invoice.invoice_id)
+
+    return HttpResponse('0', content_type='text/plain')
+
+
+# Method to flag different line items for 'save for later' status
+def toggleSave(request):
+
+    data = json.loads(request.body)
+    line_item_id = data['line_item_id']
+
+    # Check if the user is logged in. If not, return -1 and exit
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # Query for the invoice_id of the current cart
+    cart = Invoice.objects.get(user_id=request.user.id, status_id=1)
+
+    # Query for the user of the line item using invoice
+    cart_owner = cart.user_id
+
+    # Check if the two user_ids match
+    if not request.user.id == cart_owner:
+        return HttpResponse('-4', content_type='text/plain')
+
+    line_item = LineItem.objects.get(line_item=line_item_id)
+    # if the status of the lineitem is 1, switch to 6
+    print(line_item)
+    if line_item.status_id == 1:
+        line_item.status_id = 5
+
+    # else if the status of the lineitem is 6, switch to 1
+    elif line_item.status_id == 5:
+        line_item.status_id = 1
+
+    # Update and save the data
+    line_item.save()
+
+    return HttpResponse('0', content_type='text/plain')
+
+
+def getNotification(request):
+
+    # Check if the user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # Query for all the notification data with the logged in user's user id
+    notifications = Notification.objects.filter(user_id=request.user.id)
+
+    # Make an empty array and populate it with the dict of queried notification data
+    data = [None] * len(notifications)
+
+    for i in range(0, len(notifications)):
+        data[i] = {'notification_body': notifications[i].notification_body,
+                   'read': notifications[i].read}
+
+    # Convert the array into transferable data
+    data = json.dumps(data)
+
+    # Return the converted data
+    return HttpResponse(data, content_type='application/json')
+
+
+# Method for deleting notifications
+def deleteNotification(request):
+
+    # Check if the user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    data = json.loads(request.body)
+
+    # if a notification id is given, query the notification using the id and delete only that notification
+    if 'notification_id' in data.keys():
+        notification = Notification.objects.get(
+            id=data['notification_id'], user_id=request.user.id)
+        notification.delete()
+
+    # if not, fetch all notifications under this user's id and delete all of them
+    else:
+        notifications = Notification.objects.filter(user_id=request.user.id)
+
+        for notification in notifications:
+            notification.delete()
+
+    return HttpResponse('0', content_type='text/plain')
+
+
+def getPostMessage(request):
+
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    if request.method == 'GET':
+
+        # Extract info needed from GET params
+        line_item_id = request.GET.get('line_item')
+        user_id = request.user.id
+
+        line_item = LineItem.objects.get(line_item=line_item_id)
+        item = Item.objects.get(item_id=line_item.item_id)
+        invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
+        buyer_id = invoice.user_id
+        seller_id = item.user_id
+
+        # Check if the requesting user id and the line_item buyer's id or seller's id matches
+        # And only fetches the messages if they do
+        if request.user.id == buyer_id or request.user.id == seller_id:
+
+            # Query for all the existing messages with this user and line_item
+            # And order them by desc date_created
+            messages = Messages.objects.filter(
+                line_item_id=line_item.line_item).order_by('-date_created')
+
+            data = [None] * len(messages)
+
+            for i in range(0, len(messages)):
+
+                data[i] = {'message_body': messages[i].message_body, 'date_created': str(messages[i].date_created),
+                           'image_id': str(messages[i].image), 'user_id': messages[i].user_id}
+
+            data = json.dumps(data)
+
+            return HttpResponse(data, content_type='application/json')
+
+        else:
+
+            return HttpResponse('-9', content_type='text/plain')
+
+    elif request.method == 'POST':
+
+        # Extract data from passed in json
+        data = json.loads(request.body)
+
+        line_item_id = data['line_item_id']
+        user_id = request.user.id
+
+        line_item = LineItem.objects.get(line_item=line_item_id)
+        item = Item.objects.get(item_id=line_item.item_id)
+        invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
+        buyer_id = invoice.user_id
+        seller_id = item.user_id
+
+        # Check if the user is either the buyer or the seller of this lineitem
+        if request.user.id == buyer_id or request.user.id == seller_id:
+
+            # Extract message_body from passed in json and create a message object
+            message = data['message_body']
+            new_message = Messages(message_body=message, date_created=datetime.now(
+            ), line_item_id=line_item_id, user_id=request.user.id)
+
+            # Save the newly created message object
+            new_message.save()
+
+            return HttpResponse('0', content_type='text/plain')
+
+        else:
+
+            return HttpResponse('-9', content_type='text/plain')
+
+
+def submittedLineItem(request):
+
+    # Needed data = logged in user_id
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # logged in user's id
+    user_id = request.user.id
+
+    # Pull line items that is linked to an item that is linked to this user's user id that has a status of 2 or higher
+    # How to reach out to seller id with line item
+    # line_item -> item -> user_id
+
+    # How to reach out to buyer id with line item
+    # line_item -> invoice -> user_id
+    # How do I present buyer_id to each line_item_submitted?
+
+    # All items that have been submitted(status >= 2)
+    line_items_submitted = LineItem.objects.filter(
+        item__user_id=user_id, status_id__gte=2)
+
+    data = [None] * len(line_items_submitted)
+
+    for i in range(0, len(line_items_submitted)):
+
+        # This part was written to get buyer id from each line_item
+        invoice_id = line_items_submitted[i].invoice_id
+        buyer_id = Invoice.objects.get(invoice_id=invoice_id).user_id
+
+        data[i] = {'line_item_id': line_items_submitted[i].line_item, 'item_id': line_items_submitted[i].item_id,
+                   'requested_quantity': line_items_submitted[i].quantity, 'status_id': line_items_submitted[i].status_id, 'buyer_id': buyer_id}
+
+    data = json.dumps(data)
+
+    return HttpResponse(data, content_type='application/json')
+
+
+# Method to rate the user based on the transaction. POST method
+def rateUser(request):
+
+    # Check if user is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    data = json.loads(request.body)
+
+    line_item_id = data['line_item_id']  # int
+    rating = data['rating']  # boolean
+
+    line_item = LineItem.objects.get(line_item=line_item_id)
+    item_id = line_item.item_id
+    item = Item.objects.get(item_id=item_id)
+    item_owner_id = item.user_id
+    item_owner_additional_info = UserAdditionalInfo.objects.get(
+        user_id=item_owner_id)
+
+    invoice_id = line_item.invoice_id
+    invoice = Invoice.objects.get(invoice_id=invoice_id)
+    invoice_owner_id = invoice.user_id
+    print(invoice_owner_id)
+    invoice_owner_additional_info = UserAdditionalInfo.objects.get(
+        user_id=invoice_owner_id)
+
+    user_id = request.user.id
+
+    # if the current user matches the item(retrieved from line_item) owner, this user is the seller.
+    # Therefore the rating will count towards the buyer's rating
+    if user_id == item_owner_id:
+        invoice_owner = User.objects.get(id=invoice_owner_id)
+
+        if rating:  # If the rating is true
+            # Create UserAdditionalInfo object with FK of the buyer's id
+            invoice_owner_additional_info.thumbs_up += 1
+            invoice_owner_additional_info.save()
+        else:
+            invoice_owner_additional_info.thumbs_down += 1
+            invoice_owner_additional_info.save()
+
+    # If that is not the case, the user is the buyer,
+    # Therefore the rating should count towards the seller's rating
+    else:
+        item_owner = User.objects.get(id=item_owner_id)
+
+        if rating:  # If the rating is true
+            item_owner_additional_info.thumbs_up += 1
+            item_owner_additional_info.save()
+        else:
+            item_owner_additional_info.thumbs_down += 1
+            item_owner_additional_info.save()
 
     return HttpResponse('0', content_type='text/plain')

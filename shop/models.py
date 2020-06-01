@@ -3,11 +3,13 @@ from django.contrib.auth.models import User
 
 
 class UserAdditionalInfo(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, blank=True)
-    password = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
+    thumbs_up = models.IntegerField(default=0)
+    thumbs_down = models.IntegerField(default=0)
+    image = models.ImageField(blank=True, null=True)
 
     def __str__(self):
         return self.user_id
@@ -19,8 +21,8 @@ class Item(models.Model):
     name = models.CharField(max_length=255)
     desc = models.CharField(max_length=255, blank=True)
     price = models.DecimalField(max_digits=15, decimal_places=2)
-    # image_id = models.IntegerField(blank=True, default=0)
     stock = models.IntegerField(default=0)
+    image = models.ImageField(blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -41,7 +43,6 @@ class Invoice(models.Model):
     invoice_id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateTimeField('invoice creation date')
-    # status = models.CharField(max_length=10, default="cart", choices=INVOICE_STATUS)
     status = models.ForeignKey(InvoiceStatus, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -60,10 +61,8 @@ class LineItemStatus(models.Model):
 
 class LineItem(models.Model):
     line_item = models.AutoField(primary_key=True)
-    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    # line_item_name = models.CharField(max_length=255)
     line_item_price = models.DecimalField(
         max_digits=15, decimal_places=2, default=0)
     quantity = models.IntegerField(default=0)
@@ -79,6 +78,7 @@ class Notification(models.Model):
     read = models.BooleanField(default=False)
     # cleared = models.BooleanField(default=False)
     notification_body = models.CharField(max_length=255)
+    line_item_id = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
         return self.notification_body
@@ -89,7 +89,7 @@ class Messages(models.Model):
     line_item = models.ForeignKey(LineItem, on_delete=models.CASCADE)
     message_body = models.CharField(max_length=255)
     date_created = models.DateTimeField('message creation date')
-    image_id = models.CharField(max_length=255, null=True, blank=True)
+    image = models.ImageField(null=True, blank=True)
 
     def __str__(self):
         return self.message_body

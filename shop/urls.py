@@ -1,19 +1,25 @@
 # from rest_framework import routers
 # from .api import UserViewSet, ItemViewSet
 from django.urls import path, include
-from .views import GetUserInfo, RegisterUser, UserLogin, UserLogout, GetPostItem, GetPostInvoice, GetPostCart, SubmitCart, PutInLocker, PickUpItem
+from .views import getUserInfo, registerUser, userLogin, userLogout, getPostItem, getPostInvoice, getPostCart, submitCart, putInLocker, pickUpItem, toggleSave, getNotification, deleteNotification, getPostMessage, submittedLineItem, rateUser
 
 urlpatterns = [
-    path('user/info/', GetUserInfo, name='user'),
-    path('user/register/', RegisterUser, name='register'),
-    path('login/', UserLogin, name='login'),
-    path('logout/', UserLogout, name='logout'),
-    path('item/', GetPostItem, name='item'),
-    path('invoice/', GetPostInvoice, name='invoice'),
-    path('cart/', GetPostCart, name='cart'),
-    path('submit/', SubmitCart, name='submit'),
-    path('dropoff/', PutInLocker, name='dropoff'),
-    path('pickup/', PickUpItem, name='pickup')
+    path('user/info/', getUserInfo, name='user'),
+    path('user/register/', registerUser, name='register'),
+    path('login/', userLogin, name='login'),
+    path('logout/', userLogout, name='logout'),
+    path('item/', getPostItem, name='item'),
+    path('invoice/', getPostInvoice, name='invoice'),
+    path('cart/', getPostCart, name='cart'),
+    path('submit/', submitCart, name='submit'),
+    path('dropoff/', putInLocker, name='dropoff'),
+    path('pickup/', pickUpItem, name='pickup'),
+    path('save/', toggleSave, name='save'),
+    path('notification/', getNotification, name='getNotification'),
+    path('deleteNotification/', deleteNotification, name='deleteNotification'),
+    path('message/', getPostMessage, name='getPostMessage'),
+    path('submittedLineItem/', submittedLineItem, name='submittedLineItem'),
+    path('rateUser/', rateUser, name='rateUser'),
 ]
 
 
