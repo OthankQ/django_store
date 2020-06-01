@@ -1,7 +1,7 @@
 from django.shortcuts import render
 
 from django.http import HttpResponse
-from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification, Messages
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification, Message
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
@@ -21,12 +21,15 @@ def getUserInfo(request):
             # Query for the data that matches the criteria
             requested_user = User.objects.get(
                 username=requested_username)
+            requested_user_id = requested_user.id
+            requested_user_additional_info = UserAdditionalInfo.objects.get(
+                user_id=requested_user_id)
 
             if requested_user:
 
                 # Create a dict with the values retrieved from the queried data point
                 data = {'id': requested_user.id,
-                        'username': requested_user.username, 'date_joined': str(requested_user.date_joined), 'last_login': str(requested_user.last_login)}
+                        'username': requested_user.username, 'date_joined': str(requested_user.date_joined), 'last_login': str(requested_user.last_login), 'thumbs_up': requested_user_additional_info.thumbs_up, 'thumbs_down': requested_user_additional_info.thumbs_down, 'image': str(requested_user_additional_info.image)}
 
                 # Convet the data to transferable json
                 data = json.dumps(data)
@@ -55,6 +58,32 @@ def getUserInfo(request):
 
         # Return the queried and converted data
         return HttpResponse(data, content_type='application/json')
+
+
+# Fetch currently logged in user's info
+def getLoggedInUserInfo(request):
+
+    # Check if someone is logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('-1', content_type='text/plain')
+
+    # Get currently logged in user object
+    user = request.user
+
+    user_id = request.user.id
+    username = request.user.username
+    first_name = request.user.first_name
+    last_name = request.user.last_name
+    email = request.user.email
+    date_joined = request.user.date_joined
+    last_login = request.user.last_login
+
+    data = {'user_id': user_id, 'username': username, 'first_name': first_name,
+            'last_name': last_name, 'email': email, 'date_joined': str(date_joined), 'last_login': str(last_login)}
+
+    data = json.dumps(data)
+
+    return HttpResponse(data, content_type='application/json')
 
 
 # Registration
@@ -171,7 +200,7 @@ def getPostItem(request):
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                               str(Items[i].price), 'stock': Items[i].stock}
+                               str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image)}
 
                 data = json.dumps(data)
 
@@ -205,7 +234,7 @@ def getPostItem(request):
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                               str(Items[i].price), 'stock': Items[i].stock}
+                               str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image)}
 
                 data = json.dumps(data)
 
@@ -223,7 +252,7 @@ def getPostItem(request):
         for i in range(0, len(Items)):
 
             data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i]
-                       .name, 'price': str(Items[i].price), 'stock': Items[i].stock}
+                       .name, 'price': str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image)}
 
         data = json.dumps(data)
 
@@ -447,7 +476,12 @@ def getPostCart(request):
             # Create dict of line items in cart and append them to the empty array created above
             for i in range(0, len(lineItems)):
 
-                data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id,
+                # Per one item, query for its item name and item image
+                item = Item.objects.get(item_id=lineItems[i].item_id)
+                item_name = item.name
+                item_image = item.image
+
+                data[i] = {'line_item_id': lineItems[i].line_item, 'invoice_id': lineItems[i].invoice_id, 'item_id': lineItems[i].item_id, 'item_name': item_name, 'item_image': str(item_image),
                            'line_item_price': float(lineItems[i].line_item_price), 'quantity': lineItems[i].quantity, 'status': lineItems[i].status_id}
 
             # Convert the array into transferable json data
@@ -481,6 +515,12 @@ def getPostCart(request):
                 return HttpResponse('-10', content_type='text/plain')
 
             # Check if item_id input is of the right data type: int
+
+            # try:
+            #     int(data['item_id'])
+            # except:
+            #     return HttpResponse('-7', content_type='text/plain')
+
             if not type(data['item_id']) == int:
 
                 return HttpResponse('-7', content_type='text/plain')
@@ -915,7 +955,7 @@ def getPostMessage(request):
 
             # Query for all the existing messages with this user and line_item
             # And order them by desc date_created
-            messages = Messages.objects.filter(
+            messages = Message.objects.filter(
                 line_item_id=line_item.line_item).order_by('-date_created')
 
             data = [None] * len(messages)
@@ -952,7 +992,7 @@ def getPostMessage(request):
 
             # Extract message_body from passed in json and create a message object
             message = data['message_body']
-            new_message = Messages(message_body=message, date_created=datetime.now(
+            new_message = Message(message_body=message, date_created=datetime.now(
             ), line_item_id=line_item_id, user_id=request.user.id)
 
             # Save the newly created message object
@@ -1025,7 +1065,7 @@ def rateUser(request):
     invoice_id = line_item.invoice_id
     invoice = Invoice.objects.get(invoice_id=invoice_id)
     invoice_owner_id = invoice.user_id
-    print(invoice_owner_id)
+    # print(invoice_owner_id)
     invoice_owner_additional_info = UserAdditionalInfo.objects.get(
         user_id=invoice_owner_id)
 

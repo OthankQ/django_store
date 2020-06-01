@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import UserAdditionalInfo, Item, Invoice, LineItem, Messages
+from .models import UserAdditionalInfo, Item, Invoice, LineItem, Message
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -17,8 +17,7 @@ class LineItemInline(admin.TabularInline):
 
 class UserAdditionalInfoAdmin(admin.ModelAdmin):
     fieldsets = [('General Information', {'fields': (
-        'user_id', 'name', 'phone_number', 'password')}), ]
-    inlines = [InvoiceInline]
+        'user', 'name', 'phone_number', 'image')}), ]
 
 
 class InvoiceAdmin(admin.ModelAdmin):
@@ -28,10 +27,10 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 class ItemAdmin(admin.ModelAdmin):
     fieldsets = [
-        (None, {'fields': ('name', 'desc', 'price', 'stock', 'image_id')})]
+        (None, {'fields': ('name', 'desc', 'price', 'stock', 'image')})]
 
 
-class MessagesAdmin(admin.ModelAdmin):
+class MessageAdmin(admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ('user', 'line_item', 'message_body', 'date_created', 'image')})]
 
@@ -39,4 +38,5 @@ class MessagesAdmin(admin.ModelAdmin):
 # admin.site.register(User, UserAdmin)
 admin.site.register(Invoice, InvoiceAdmin)
 admin.site.register(Item, ItemAdmin)
-admin.site.register(Messages, MessagesAdmin)
+admin.site.register(Message, MessageAdmin)
+admin.site.register(UserAdditionalInfo, UserAdditionalInfoAdmin)
