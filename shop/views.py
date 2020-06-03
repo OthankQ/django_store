@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from datetime import datetime
+from django.core.mail import send_mail
 import json
 
 
@@ -121,6 +122,16 @@ def registerUser(request):
         new_user_additionalInfo = UserAdditionalInfo(user_id=new_user.id)
         new_user_additionalInfo.save()
 
+        # This is where we have to send the newly registered user verification emails
+
+        send_mail(
+            'Verification Email',
+            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/verify?id={new_user.id}"></body></html>',
+            'admin@shibalocker.com',
+            [f'{new_user.email}'],
+            fail_silently=False
+        )
+
         print('User has been registered successfully')
 
         # Create Cart
@@ -150,12 +161,42 @@ def registerUser(request):
         return HttpResponse('{"status_code": -8, "message": "Duplicate entry(username, email)"}', content_type='application/json')
 
 
+# Method to verify user's email account
+def verify(request):
+    # GET request containing user id as a param
+
+    user_id = request.GET.get('id')
+
+    # Query for the user's verified field on userAdditionalInfo table
+    user_additional_info = UserAdditionalInfo.objects.get(user_id=user_id)
+
+    # Change the verified status to True and save
+    user_additional_info.verified = True
+    user_additional_info.save()
+
+    return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
 def userLogin(request):
     try:
         data = json.loads(request.body)
 
         username = data['username']
         password = data['password']
+
+        # send back 'not verified' if the user is not verified
+
+        # Fetch user using username
+        user = User.objects.get(username=username)
+
+        # Fetch user additional info using user id
+        user_additional_info = UserAdditionalInfo.objects.get(user_id=user.id)
+
+        verified = user_additional_info.verified
+
+        if not verified:
+
+            return HttpResponse('{"status_code": -12, "message": "This user is not verified"}', content_type='application/json')
 
         user = authenticate(request, username=username, password=password)
 
