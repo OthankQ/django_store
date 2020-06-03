@@ -187,7 +187,7 @@ def userLogin(request):
         # send back 'not verified' if the user is not verified
 
         # Fetch user using username
-        user = User.objects.get(username=username)
+        user = User.objects.filter(username=username)
 
         # Fetch user additional info using user id
         user_additional_info = UserAdditionalInfo.objects.get(user_id=user.id)
@@ -198,12 +198,12 @@ def userLogin(request):
 
             return HttpResponse('{"status_code": -12, "message": "This user is not verified"}', content_type='application/json')
 
-        user = authenticate(request, username=username, password=password)
-
         if user is not None:
 
-            # Save user info to session
+            # Verify the credentials
+            user = authenticate(request, username=username, password=password)
 
+            # Save user info to session
             login(request, user)
             return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
