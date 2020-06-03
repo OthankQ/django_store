@@ -6,7 +6,7 @@ from .views import getUserInfo, registerUser, userLogin, userLogout, getPostItem
 urlpatterns = [
     path('user/info/', getUserInfo, name='user'),
     path('user/register/', registerUser, name='register'),
-    path('loggedInUser/', getLoggedInUserInfo, name='loggedInUserInfo'),
+    path('loggedinuser/', getLoggedInUserInfo, name='loggedInUserInfo'),
     path('login/', userLogin, name='login'),
     path('logout/', userLogout, name='logout'),
     path('item/', getPostItem, name='item'),
@@ -17,10 +17,10 @@ urlpatterns = [
     path('pickup/', pickUpItem, name='pickup'),
     path('save/', toggleSave, name='save'),
     path('notification/', getNotification, name='getNotification'),
-    path('deleteNotification/', deleteNotification, name='deleteNotification'),
+    path('deletenotification/', deleteNotification, name='deleteNotification'),
     path('message/', getPostMessage, name='getPostMessage'),
-    path('submittedLineItem/', submittedLineItem, name='submittedLineItem'),
-    path('rateUser/', rateUser, name='rateUser'),
+    path('submittedlineitem/', submittedLineItem, name='submittedLineItem'),
+    path('rateuser/', rateUser, name='rateUser'),
     path('verify/', verify, name='verify')
 ]
 

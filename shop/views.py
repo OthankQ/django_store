@@ -43,6 +43,11 @@ def getUserInfo(request):
 
                 return HttpResponse('{"status_code": -5, "message": "No info retrieved"}', content_type='application/json')
 
+        # When no GET params are given
+        else:
+
+            return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
+
         # Query for all Users when there were no params given
         Users = User.objects.all().order_by()
 
@@ -94,6 +99,15 @@ def registerUser(request):
     data = json.loads(request.body)
 
     try:
+
+        # If any of the required data is not provided, exit with code -13
+        if not 'email' in data.keys() or not 'username' in data.keys() or not 'password' in data.keys():
+
+            return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
+
+        if data['email'] == "" or data['username'] == "" or data['password'] == "":
+
+            return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
 
         email = data['email']
         # Check if user has entered wrong datatype for email
@@ -181,6 +195,14 @@ def userLogin(request):
     try:
         data = json.loads(request.body)
 
+        if not 'username' in data.keys() or not 'password' in data.keys():
+
+            return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
+
+        if data['username'] == "" or data['password'] == "":
+
+            return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
+
         username = data['username']
         password = data['password']
 
@@ -189,8 +211,15 @@ def userLogin(request):
         # Fetch user using username
         user = User.objects.filter(username=username)
 
+        # Check if there are any users with that username
+        if len(user) == 0:
+            return HttpResponse('{"status_code": -14, "message": "No matching user"}', content_type='application/json')
+        else:
+            user = user[0]
+
         # Fetch user additional info using user id
-        user_additional_info = UserAdditionalInfo.objects.get(user_id=user.id)
+        user_additional_info = UserAdditionalInfo.objects.get(
+            user_id=user.id)
 
         verified = user_additional_info.verified
 
@@ -892,6 +921,11 @@ def pickUpItem(request):
 def toggleSave(request):
 
     data = json.loads(request.body)
+
+    if not 'line_item_id' in data.keys():
+
+        return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
+
     line_item_id = data['line_item_id']
 
     # Check if the user is logged in. If not, return -1 and exit
