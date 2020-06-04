@@ -96,6 +96,10 @@ def getLoggedInUserInfo(request):
 def registerUser(request):
 
     # Load passed json into python dict
+
+    if request.method == 'GET':
+        return HttpResponse('{"status_code": -15, "message": "Invalid method"}', content_type='application/json')
+
     data = json.loads(request.body)
 
     try:
@@ -140,7 +144,7 @@ def registerUser(request):
 
         send_mail(
             'Verification Email',
-            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/verify?id={new_user.id}"></body></html>',
+            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?id={new_user.id}"></body></html>',
             'admin@shibalocker.com',
             [f'{new_user.email}'],
             fail_silently=False
@@ -149,7 +153,6 @@ def registerUser(request):
         print('User has been registered successfully')
 
         # Create Cart
-
         # Query for the id of the just created user's id number
         new_user = User.objects.filter(username=username)[0]
         new_user_id = new_user.id
@@ -192,6 +195,10 @@ def verify(request):
 
 
 def userLogin(request):
+
+    if request.method == 'GET':
+        return HttpResponse('{"status_code": -15, "message": "Invalid method"}', content_type='application/json')
+
     try:
         data = json.loads(request.body)
 
@@ -919,6 +926,9 @@ def pickUpItem(request):
 
 # Method to flag different line items for 'save for later' status
 def toggleSave(request):
+
+    if request.method == 'GET':
+        return HttpResponse('{"status_code": -15, "message": "Invalid method"}', content_type='application/json')
 
     data = json.loads(request.body)
 

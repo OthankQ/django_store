@@ -6,22 +6,23 @@ from .views import getUserInfo, registerUser, userLogin, userLogout, getPostItem
 urlpatterns = [
     path('user/info/', getUserInfo, name='user'),
     path('user/register/', registerUser, name='register'),
-    path('loggedinuser/', getLoggedInUserInfo, name='loggedInUserInfo'),
-    path('login/', userLogin, name='login'),
-    path('logout/', userLogout, name='logout'),
+    path('user/current/', getLoggedInUserInfo, name='loggedInUserInfo'),
+    path('user/rate/', rateUser, name='rateUser'),
+    path('user/verify/', verify, name='verify'),
+    path('user/login/', userLogin, name='login'),
+    path('user/logout/', userLogout, name='logout'),
     path('item/', getPostItem, name='item'),
+    # item/delete/
     path('invoice/', getPostInvoice, name='invoice'),
-    path('cart/', getPostCart, name='cart'),
-    path('submit/', submitCart, name='submit'),
-    path('dropoff/', putInLocker, name='dropoff'),
-    path('pickup/', pickUpItem, name='pickup'),
-    path('save/', toggleSave, name='save'),
+    path('invoice/cart/', getPostCart, name='cart'),
+    path('invoice/cart/submit/', submitCart, name='submit'),
+    path('lineitem/dropoff/', putInLocker, name='dropoff'),
+    path('lineitem/pickup/', pickUpItem, name='pickup'),
+    path('lineitem/save/', toggleSave, name='save'),
+    path('lineitem/submitted/', submittedLineItem, name='submittedLineItem'),
     path('notification/', getNotification, name='getNotification'),
-    path('deletenotification/', deleteNotification, name='deleteNotification'),
+    path('notification/delete/', deleteNotification, name='deleteNotification'),
     path('message/', getPostMessage, name='getPostMessage'),
-    path('submittedlineitem/', submittedLineItem, name='submittedLineItem'),
-    path('rateuser/', rateUser, name='rateUser'),
-    path('verify/', verify, name='verify')
 ]
 
 
