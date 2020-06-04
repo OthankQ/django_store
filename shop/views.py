@@ -118,8 +118,10 @@ def registerUser(request):
         if not type(email) == str:
             return HttpResponse('{"status_code": -7, "message": "Wrong data type input"}', content_type='application/json')
 
-        # Check if there is a duplicate email address
+        # Convert email to lower case so it will not be case sensitive
+        email = email.lower()
 
+        # Check if there is a duplicate email address
         # Query for any user with the entered email address
         existing_user_with_same_email = User.objects.filter(email=email)
 
@@ -131,6 +133,9 @@ def registerUser(request):
         # Check if user has entered wrong datatype for username
         if not type(username) == str:
             return HttpResponse('{"status_code": -7, "message": "Wrong data type input"}', content_type='application/json')
+
+        # Convert username to lower case so it will not be case sensitive
+        username = username.lower()
 
         password = data['password']
 
@@ -702,11 +707,11 @@ def deleteLineItem(request):
     data = json.loads(request.body)
 
     # If line_item is given, and when the logged in user id matches the buyer's id, delete that one item
-    if 'line_item' in data.keys():
+    if 'line_item_id' in data.keys():
 
         # Query for the lineitem using line_item and current cart(invoice) id
         line_item = LineItem.objects.get(
-            line_item=data['line_item'], status_id=1)
+            line_item=data['line_item_id'], status_id=1)
         invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
         buyer = invoice.user_id
 
@@ -715,19 +720,21 @@ def deleteLineItem(request):
 
         line_item.delete()
 
-    # If no line_item is given , query and delete everything in cart
+    else:
 
-    # Check if logged in user and invoice's user id matches
-    logged_in_user_cart = Invoice.objects.filter(
-        user_id=request.user.id, status_id=1)
+        # If no line_item is given , query and delete everything in cart
 
-    # Query everything in this user's invoice with a status of 1(cart)
-    line_items = LineItem.objects.filter(
-        status_id=1, invoice_id=logged_in_user_cart.invoice_id)
+        # Check if logged in user and invoice's user id matches
+        logged_in_user_cart = Invoice.objects.get(
+            user_id=request.user.id, status_id=1)
 
-    # Use a for loop to iterate through all the line_items and delete them
-    for line_item in line_items:
-        line_item.delete()
+        # Query everything in this user's invoice with a status of 1(cart)
+        line_items = LineItem.objects.filter(
+            status_id=1, invoice_id=logged_in_user_cart.invoice_id)
+
+        # Use a for loop to iterate through all the line_items and delete them
+        for line_item in line_items:
+            line_item.delete()
 
     return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
