@@ -262,6 +262,63 @@ def userLogout(request):
     return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
 
+def forgotPassword(request):
+    # Send an email to the address entered by the user if that email address matches any in the user table
+
+    data = json.loads(request.body)
+    email = data['email']
+
+    # Check if retrieved email matches any in the user db
+    user = User.objects.filter(email=email)
+
+    # If there is no match, do nothing
+
+    # If there is a match, send a link to reset password
+    if len(user) > 0:
+
+        user_id = user[0].id
+        user_email = user[0].email
+
+        send_mail(
+            'Password Reset Email',
+            f'Click the link to reset your password.<html><body><a href="http://localhost:8000/api/password/reset?id={user_id}"></body></html>',
+            'admin@shibastudios.net',
+            [f'{user_email}'],
+            fail_silently=False
+        )
+
+
+def resetPassword(request):
+
+    user_id = str()
+
+    if request.method == 'GET':
+
+        # Retrieve the user with the user_id in the params
+        user_id = request.GET.get('id')
+
+        return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+    if request.method == 'POST':
+
+        data = json.loads(request.body)
+
+        new_password = data['new_password']
+        password_confirm = data['password_confirm']
+
+        # When new password and confirm do not match, send an error
+        if not new_password == password_confirm:
+
+            return HttpResponse('{"status_code": -16, "message": "Password confirm does not match"}', content_type='application/json')
+
+        # When they do match, fetch the user with user_id and change the password
+        user = User.objects.get(id=user_id)
+        user.password = new_password
+        user.save()
+
+        return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
 # Retrieve or add Item data
 def getPostItem(request):
 
