@@ -145,7 +145,7 @@ def registerUser(request):
         send_mail(
             'Verification Email',
             f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?id={new_user.id}"></body></html>',
-            'admin@shibalocker.com',
+            'admin@shibastudios.net',
             [f'{new_user.email}'],
             fail_silently=False
         )

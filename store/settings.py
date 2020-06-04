@@ -143,9 +143,19 @@ MEDIA_URL = "/api/images/"
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/images')
 
+# Server Settings
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email settings
+
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = 'admin@shibastudios.net'
+EMAIL_HOST_PASSWORD = 'Whatagoodboy!'
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = True
