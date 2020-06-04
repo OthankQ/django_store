@@ -398,6 +398,31 @@ def getPostItem(request):
         return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
 
+def deleteItem(request):
+
+    # If the method is not POST, exit with a status code of -15
+    if not request.method == 'POST':
+        return HttpResponse('{"status_code": -15, "message": "Wrong method"}', content_type='application/json')
+
+    # Needs to be logged in
+    if not request.user.is_authenticated:
+        return HttpResponse('{"status_code": -1, "message": "Login required"}', content_type='application/json')
+
+    data = json.loads(request.body)
+    item_id = data.item_id
+    item = Item.objects.get(item_id=item_id)
+    item_user_id = item.user_id
+    current_user_id = request.user.id
+
+    # Check if the logged in user's id is the same as the item's owner id, if not, exit with error code -3
+    if not item_user_id == current_user_id:
+        return HttpResponse('{"status_code": -3, "message": "User id does not match the item seller id"}', content_type='application/json')
+
+    item.delete()
+
+    return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
 # Retreive or add invoice data
 def getPostInvoice(request):
     if request.method == 'GET':
@@ -405,7 +430,6 @@ def getPostInvoice(request):
 
         # Check if this dude is logged in
         if request.user.is_authenticated:
-
             # Query for all the invoice under this user's id
             requested_invoices = Invoice.objects.filter(
                 user_id=request.user.id)
