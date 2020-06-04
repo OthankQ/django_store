@@ -409,7 +409,7 @@ def deleteItem(request):
         return HttpResponse('{"status_code": -1, "message": "Login required"}', content_type='application/json')
 
     data = json.loads(request.body)
-    item_id = data.item_id
+    item_id = data['item_id']
     item = Item.objects.get(item_id=item_id)
     item_user_id = item.user_id
     current_user_id = request.user.id
@@ -689,6 +689,11 @@ def getPostCart(request):
 
 # Method to remove item from cart
 def deleteLineItem(request):
+
+    # If the method is not POST, exit with a status code of -15
+    if not request.method == 'POST':
+        return HttpResponse('{"status_code": -15, "message": "Wrong method"}', content_type='application/json')
+
     # Check if a user is logged in
     if not request.user.is_authenticated:
 
