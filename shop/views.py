@@ -8,6 +8,7 @@ from django.db import IntegrityError
 from datetime import datetime
 from django.core.mail import send_mail
 import json
+import random
 
 
 def getUserInfo(request):
@@ -140,16 +141,32 @@ def registerUser(request):
         password = data['password']
 
         new_user = User.objects.create_user(username, email, password)
-        new_user.save()
 
         new_user_additionalInfo = UserAdditionalInfo(user_id=new_user.id)
-        new_user_additionalInfo.save()
 
         # This is where we have to send the newly registered user verification emails
+        characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+        url_key = ''
+
+        for i in range(0, 10):
+            url_key += random.choice(characters)
+
+        user_id = new_user.id
+        user_email = new_user_additionalInfo.email
+
+        new_user.save()
+        new_user_additionalInfo.save()
+
+        pass_key_object = PassKey(
+            user_id=user_id, url_key=url_key)
+
+        # This pass_code_object will get destroyed after user verifies
+        pass_key_object.save()
 
         send_mail(
             'Verification Email',
-            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?id={new_user.id}"></body></html>',
+            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?key={url_key}"></body></html>',
             'admin@shibastudios.net',
             [f'{new_user.email}'],
             fail_silently=False
@@ -185,18 +202,37 @@ def registerUser(request):
 
 # Method to verify user's email account
 def verify(request):
-    # GET request containing user id as a param
 
-    user_id = request.GET.get('id')
+    # GET request containing pass code as a param
+    url_key = request.GET.get('key')
+    pass_key_object = PassKey.objects.get(url_key=url_key)
+    user_id = pass_key_object.user_id
+
+    # Do a check if there are any previously generated pass_key_objects associated with this user
+    previous_pass_keys = PassKey.objects.exclude(
+        url_key=pass_key_object.url_key)
+
+    # If there are any, delete them one by one
+    if len(previous_pass_keys) > 0:
+        for i in range(0, len(previous_pass_keys)):
+            previous_pass_keys[i].delete()
 
     # Query for the user's verified field on userAdditionalInfo table
-    user_additional_info = UserAdditionalInfo.objects.get(user_id=user_id)
+    user_additional_info = UserAdditionalInfo.objects.get(
+        user_id=pass_key_object.user_id)
 
     # Change the verified status to True and save
     user_additional_info.verified = True
     user_additional_info.save()
 
+    # get rid of pass_code_object
+    pass_code_object.delete()
+
     return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
+# Method to do a simple check before verifying if there is any passcode associated with the currently generated passcode
+# def reVerify(request):
 
 
 def userLogin(request):
@@ -234,10 +270,15 @@ def userLogin(request):
             user_id=user.id)
 
         verified = user_additional_info.verified
+        password_resetting = user_additional_info.password_resetting
 
         if not verified:
 
             return HttpResponse('{"status_code": -12, "message": "This user is not verified"}', content_type='application/json')
+
+        if password_resetting:
+
+            return HttpResponse('{"status_code": -17, "message": "This user is in the process of resetting the password"}', content_type='application/json')
 
         if user is not None:
 
@@ -270,18 +311,42 @@ def forgotPassword(request):
 
     # Check if retrieved email matches any in the user db
     user = User.objects.filter(email=email)
+    user_additional_info = UserAdditionalInfo.objects.get(useruser.id)
 
     # If there is no match, do nothing
 
-    # If there is a match, send a link to reset password
     if len(user) > 0:
+
+        # If there is a match, set password_resetting to 1
+
+        user_additional_info.password_resetting = True
+
+        # Create a random 10 digit passcode, create passcode object linked to this user's user id, then embed it into the link being sent
+        # Create a second pass code, embed it into the text of the email
+
+        characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+        pass_code = ''
+
+        text_pass_code = ''
+
+        for i in range(0, 10):
+            pass_code += random.choice(characters)
+            text_pass_code += random.choice(characters)
 
         user_id = user[0].id
         user_email = user[0].email
 
+        pass_code_object = PassCode(
+            user_id=user_id, pass_code=pass_code, text_pass_code=text_pass_code)
+
+        pass_code_object.save()
+
+        # send a link to reset password
+        # Also, set the password_resetting field to true
         send_mail(
             'Password Reset Email',
-            f'Click the link to reset your password.<html><body><a href="http://localhost:8000/api/password/reset?id={user_id}"></body></html>',
+            f'Click the link and enter {text_pass_code} along with your new password to reset your password.<html><body><a href="http://localhost:8000/api/password/reset?pass={pass_code}"></body></html>',
             'admin@shibastudios.net',
             [f'{user_email}'],
             fail_silently=False
@@ -290,12 +355,19 @@ def forgotPassword(request):
 
 def resetPassword(request):
 
-    user_id = str()
+    # Pull the passcode from params and retrieve passcode object
+    pass_code_object = None
+    user_additional_info = None
 
     if request.method == 'GET':
+        # Check if the clicked link is still valid
 
-        # Retrieve the user with the user_id in the params
-        user_id = request.GET.get('id')
+        # This is where all the variables above are being set
+        # Retrieve the passcode object using the param
+        pass_code = request.GET.get('pass')
+        pass_code_object = PassCode.objects.get(pass_code=pass_code)
+        user_additional_info = UserAdditionalInfo.objects.get(
+            user_id=pass_code_object.user_id)
 
         return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
@@ -305,6 +377,22 @@ def resetPassword(request):
 
         new_password = data['new_password']
         password_confirm = data['password_confirm']
+        text_pass_code = data['text_pass_code']
+
+        if not text_pass_code == pass_code_object.text_pass_code:
+
+            pass_code_object.attempts += 1
+            pass_code_objects.save()
+
+            if pass_code_object.attempts == 5:
+
+                pass_code_object.delete()
+
+                # Needs to disable the submit button, or needs to redirect the user to the homepage
+
+                return HttpResponse('{"status_code": -18, "message": "Exceeded the limits of possible attempts"}', content_type='application/json')
+
+            pass_code_object.save()
 
         # When new password and confirm do not match, send an error
         if not new_password == password_confirm:
@@ -315,6 +403,13 @@ def resetPassword(request):
         user = User.objects.get(id=user_id)
         user.password = new_password
         user.save()
+
+        # Set password_resetting status to False and save
+        user_additional_info.password_resetting = False
+        user_additional_info.save()
+
+        # Delete the pass_code_object when password reset is successful
+        pass_code_object.delete()
 
         return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
