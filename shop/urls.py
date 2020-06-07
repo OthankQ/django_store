@@ -9,9 +9,10 @@ urlpatterns = [
     path('user/current/', getLoggedInUserInfo, name='loggedInUserInfo'),
     path('user/rate/', rateUser, name='rateUser'),
     path('user/verify/', verify, name='verify'),
-    path('password/recover/', forgotPassword, name='forgotPassword'),
+    path('user/password/recover/', forgotPassword, name='forgotPassword'),
     path('user/login/', userLogin, name='login'),
     path('user/logout/', userLogout, name='logout'),
+    path('user/password/reset/', resetPassword, name='resetPassword'),
     path('item/', getPostItem, name='item'),
     path('item/delete/', deleteItem, name='deleteItem'),
     path('invoice/', getPostInvoice, name='invoice'),
@@ -25,7 +26,6 @@ urlpatterns = [
     path('notification/', getNotification, name='getNotification'),
     path('notification/delete/', deleteNotification, name='deleteNotification'),
     path('message/', getPostMessage, name='getPostMessage'),
-    path('user/password/', resetPassword, name='resetPassword'),
 ]
 
 

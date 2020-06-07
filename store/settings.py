@@ -152,10 +152,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/images')
 
 # Email settings
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'admin@shibastudios.net'
 EMAIL_HOST_PASSWORD = 'Whatagoodboy!'
 EMAIL_USE_TLS = True
 # EMAIL_USE_SSL = True
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
