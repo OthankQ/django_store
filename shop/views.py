@@ -319,10 +319,14 @@ def forgotPassword(request):
 
         return HttpResponse('{"status_code": -12, "message": "This user is not verified"}', content_type='application/json')
 
-    # If there is no match, do nothing
+    # If there is no match, send a status code
+
+    if len(user) == 0:
+
+        return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
     # If there is a match, set password_resetting to 1
-    if len(user) > 0:
+    elif len(user) > 0:
         print(user_additional_info.password_resetting)
         user_additional_info.password_resetting = True
         user_additional_info.save()
