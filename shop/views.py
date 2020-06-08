@@ -381,13 +381,25 @@ def resendVerification(request):
 
         username = data['username']
 
-        user = User.objects.get(username=username)
+        user = User.objects.filter(username=username)
+
+        if len(user) == 0:
+
+            return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+        user = user[0]
 
     if 'email' in data.keys():
 
         email = data['email']
 
-        user = User.objects.get(email=email)
+        user = User.objects.filter(email=email)
+
+        if len(user) == 0:
+
+            return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+        user = user[0]
 
     user_id = user.id
 
@@ -395,7 +407,7 @@ def resendVerification(request):
 
     if user_additional_info.verified == True:
 
-        return HttpResponse('This user has already been verified', content_type='text/plain')
+        return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
     user_email = user.email
 
