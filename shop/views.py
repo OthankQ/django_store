@@ -6,7 +6,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from datetime import datetime
-from django.core.mail import send_mail
+# from django.core.mail import send_mail
+from .email import send_mail
 import json
 import random
 
@@ -165,11 +166,9 @@ def registerUser(request):
         pass_key_object.save()
 
         send_mail(
+            new_user.email,
             'Verification Email',
-            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?key={url_key}"></body></html>',
-            'admin@shibastudios.net',
-            [f'{new_user.email}'],
-            fail_silently=False
+            f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?key={url_key}"></body></html>'
         )
 
         print('User has been registered successfully')
@@ -362,11 +361,9 @@ def forgotPassword(request):
         # send a link to reset password
         # Also, set the password_resetting field to true
         send_mail(
+            user_email,
             'Password Reset Email',
-            f'Click the link and enter {text_key} along with your new password to reset your password.<html><body><a href="http://localhost:8000/api/user/password/reset?key={url_key}"></body></html>',
-            'admin@shibastudios.net',
-            [f'{user_email}'],
-            fail_silently=False
+            f'Click the link and enter {text_key} along with your new password to reset your password.<html><body><a href="http://localhost:8000/api/user/password/reset?key={url_key}"></body></html>'
         )
 
         return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
