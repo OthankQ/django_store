@@ -372,6 +372,58 @@ def forgotPassword(request):
         return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
 
+# Resending verification
+def resendVerification(request):
+
+    data = json.loads(request.body)
+
+    if 'username' in data.keys():
+
+        username = data['username']
+
+        user = User.objects.get(username=username)
+
+    if 'email' in data.keys():
+
+        email = data['email']
+
+        user = User.objects.get(email=email)
+
+    user_id = user.id
+
+    user_additional_info = UserAdditionalInfo.objects.get(user_id=user_id)
+
+    if user_additional_info.verified == True:
+
+        return HttpResponse('This user has already been verified', content_type='text/plain')
+
+    user_email = user.email
+
+    # Generate new url_key
+    characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+    url_key = ''
+
+    for i in range(0, 10):
+        url_key += random.choice(characters)
+
+    pass_key_object = PassKey(
+        user_id=user_id, url_key=url_key)
+
+    # This url_key_object will get destroyed after user verifies
+    pass_key_object.save()
+
+    send_mail(
+        'Verification Email',
+        f'Click the link to verify your email.<html><body><a href="http://localhost:8000/api/user/verify?key={url_key}"></body></html>',
+        'admin@shibastudios.net',
+        [f'{user_email}'],
+        fail_silently=False
+    )
+
+    return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
 def resetPassword(request):
 
     if request.method == 'GET':
