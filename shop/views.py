@@ -390,7 +390,7 @@ def resetPassword(request):
 
     if request.method == 'POST':
 
-        print(request.session['text_key'])
+        # print(request.session['text_key'])
 
         # Pull text_key from session and delete that session data
         text_key_from_session = request.session['text_key']
@@ -403,7 +403,7 @@ def resetPassword(request):
         data = json.loads(request.body)
 
         new_password = data['new_password']
-        password_confirm = data['password_confirm']
+        # password_confirm = data['password_confirm']
         text_key = data['text_key']
 
         if not text_key == pass_key_object.text_key:
@@ -429,9 +429,9 @@ def resetPassword(request):
             # pass_key_object.save()
 
         # When new password and confirm do not match, send an error
-        if not new_password == password_confirm:
+        # if not new_password == password_confirm:
 
-            return HttpResponse('{"status_code": -16, "message": "Password confirm does not match"}', content_type='application/json')
+        #     return HttpResponse('{"status_code": -16, "message": "Password confirm does not match"}', content_type='application/json')
 
         # When they do match, fetch the user with user_id and change the password
         user = User.objects.get(id=user_id)
