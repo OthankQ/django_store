@@ -285,7 +285,7 @@ def userLogin(request):
             user = authenticate(request, username=username, password=password)
 
             if user is None:
-                return HttpResponse('wrong password', content_type='text/plain')
+                return HttpResponse('{"status_code": -19, "message": "Wrong password"}', content_type='application/json')
 
             # Save user info to session
             login(request, user)
