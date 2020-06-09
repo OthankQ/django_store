@@ -91,20 +91,6 @@ def registerUser(request):
 
         print('User has been registered successfully')
 
-        # Create Cart
-        # Query for the id of the just created user's id number
-        new_user = User.objects.filter(username=username)[0]
-        new_user_id = new_user.id
-        new_user_registered_time = new_user.date_joined
-
-        new_cart_status = InvoiceStatus.objects.filter(id=1)[0]
-
-        # Use that id number to create new invoice(cart)
-        new_cart = Invoice(user=new_user, status=new_cart_status,
-                           date=new_user_registered_time)
-
-        new_cart.save()
-
         return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
 
     except(KeyError):
@@ -144,6 +130,20 @@ def verify(request):
 
     # get rid of url_key_object
     pass_key_object.delete()
+
+    # Creating cart only after the user has been verified
+    # Query for the id of the just created user's id number
+    new_user = User.objects.filter(id=pass_key_object.user_id)[0]
+    new_user_id = new_user.id
+    new_user_registered_time = new_user.date_joined
+
+    new_cart_status = InvoiceStatus.objects.get(id=1)
+
+    # Use that id number to create new invoice(cart)
+    new_cart = Invoice(user=new_user, status=new_cart_status,
+                       date=new_user_registered_time)
+
+    new_cart.save()
 
     return HttpResponse('User\'s email has been verified', content_type='text/plain')
 
