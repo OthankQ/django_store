@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 class UserAdditionalInfo(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    display_name = models.CharField(max_length=255, default="display name")
     name = models.CharField(max_length=255, blank=True, null=True)
     phone_number = models.IntegerField(null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)

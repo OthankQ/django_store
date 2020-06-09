@@ -48,19 +48,20 @@ def registerUser(request):
         if len(existing_user_with_same_email) > 0:
             return HttpResponse('{"status_code": -8, "message": "Duplicate entry(username, email)"}', content_type='application/json')
 
-        username = data['username']
+        display_name = data['username']
         # Check if user has entered wrong datatype for username
-        if not type(username) == str:
+        if not type(display_name) == str:
             return HttpResponse('{"status_code": -7, "message": "Wrong data type input"}', content_type='application/json')
 
         # Convert username to lower case so it will not be case sensitive
-        username = username.lower()
+        username = display_name.lower()
 
         password = data['password']
 
         new_user = User.objects.create_user(username, email, password)
 
-        new_user_additionalInfo = UserAdditionalInfo(user_id=new_user.id)
+        new_user_additionalInfo = UserAdditionalInfo(
+            user_id=new_user.id, display_name=display_name)
 
         # This is where we have to send the newly registered user verification emails
         characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
@@ -167,7 +168,8 @@ def userLogin(request):
 
             return HttpResponse('{"status_code": -13, "message": "Data not provided"}', content_type='application/json')
 
-        username = data['username']
+        # Convert username to lowercase so it would be not case sensitive
+        username = data['username'].lower()
         password = data['password']
 
         # send back 'not verified' if the user is not verified
