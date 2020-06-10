@@ -145,3 +145,12 @@ def rateUser(request):
             item_owner_additional_info.save()
 
     return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
+def getPostUserImage(request):
+    for file in request.FILES:
+        user_info = UserAdditionalInfo.objects.get(user_id=request.user)
+        user_info.image = request.Files[file].read()
+        user_info.save()
+        break
+    return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
