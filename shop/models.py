@@ -106,3 +106,11 @@ class Message(models.Model):
 
     def __str__(self):
         return self.message_body
+
+
+class ItemImage(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    image = models.ImageField(null=True, blank=True)
+
+    def __str__(self):
+        return str(self.item)
