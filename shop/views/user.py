@@ -149,8 +149,8 @@ def rateUser(request):
 
 def getPostUserImage(request):
     for file in request.FILES:
-        user_info = UserAdditionalInfo.objects.get(user_id=request.user)
-        user_info.image = request.Files[file].read()
+        user_info = UserAdditionalInfo.objects.get(user_id=request.user.id)
+        user_info.image = request.FILES[file]
         user_info.save()
         break
     return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
