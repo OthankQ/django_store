@@ -155,9 +155,16 @@ def getPostCart(request):
 
         try:
 
-            # Query for the 'cart' status invoice
-            cart = Invoice.objects.get(
+            # Query for the 'cart' status invoice. If there isn't one, create one
+            cart_list = Invoice.objects.get(
                 status_id=1, user_id=request.user.id)
+
+            if len(cart) == 0:
+                cart = Invoice(date=datetime.now(),
+                               user_id=request.user.id, status_id=1)
+            # If there is an existing cart, use that
+            else:
+                cart = cart_list[0]
 
             # Query for every item existing in the cart
             lineItems = LineItem.objects.filter(
