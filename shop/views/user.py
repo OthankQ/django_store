@@ -24,12 +24,15 @@ def getUserInfo(request):
             requested_user_id = requested_user.id
             requested_user_additional_info = UserAdditionalInfo.objects.get(
                 user_id=requested_user_id)
+            user_additional_info = UserAdditionalInfo.objects.get(
+                user_id=requested_user_id)
+            display_name = user_additional_info.display_name
 
             if requested_user:
 
                 # Create a dict with the values retrieved from the queried data point
                 data = {'id': requested_user.id,
-                        'username': requested_user.username, 'date_joined': str(requested_user.date_joined), 'last_login': str(requested_user.last_login), 'thumbs_up': requested_user_additional_info.thumbs_up, 'thumbs_down': requested_user_additional_info.thumbs_down, 'image': str(requested_user_additional_info.image)}
+                        'username': display_name, 'date_joined': str(requested_user.date_joined), 'last_login': str(requested_user.last_login), 'thumbs_up': requested_user_additional_info.thumbs_up, 'thumbs_down': requested_user_additional_info.thumbs_down, 'image': str(requested_user_additional_info.image)}
 
                 # Convet the data to transferable json
                 data = json.dumps(data)
