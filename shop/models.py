@@ -10,7 +10,7 @@ class UserAdditionalInfo(models.Model):
     address = models.CharField(max_length=255, null=True, blank=True)
     thumbs_up = models.IntegerField(default=0)
     thumbs_down = models.IntegerField(default=0)
-    image = models.ImageField(blank=True, null=True)
+    image = models.ImageField(blank=True, null=True, upload_to='users/')
     verified = models.BooleanField(default=False)
     password_resetting = models.BooleanField(default=False)
 
@@ -106,3 +106,11 @@ class Message(models.Model):
 
     def __str__(self):
         return self.message_body
+
+
+class ItemImage(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    image = models.ImageField(null=True, blank=True, upload_to='item/')
+
+    def __str__(self):
+        return str(self.item)

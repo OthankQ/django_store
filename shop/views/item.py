@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from datetime import datetime
+from shop.forms import UploadImageForm
 import json
 
 
@@ -173,3 +174,47 @@ def deleteItem(request):
     item.delete()
 
     return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+
+# Get Post item images
+def getPostItemImage(request):
+
+    # Check if user is logged in. If not, exit and return -1
+    if not request.user.is_authenticated:
+
+        return HttpResponse('{"status_code": -1, "message": "Login required"}', content_type='application/json')
+
+    if request.method == 'POST':
+
+        form = UploadImageForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            item_id = json.loads(request.POST.item_id)
+            # item_id = data['item_id']
+
+            # Fetch the item the user wants to upload images for
+            item = Item.objects.filter(item_id=item_id)
+            item_owner_id = item.user_id
+
+            # Check if the item is owned by this user
+            if not item_owner_id == request.user.id:
+
+                return HttpResponse('{"status_code": -3, "message": "Id does not match the seller\'s id"}', content_type='application/json')
+
+            # If there is no matching item with the provided item id
+            if len(item) == 0:
+
+                return HttpResponse('{"status_code": -20, "message": "No item with matching id"}', content_type='application/json')
+
+            for file in request.FILES:
+
+                # For each file in request, create and save ItemImage objects
+
+                new_item_image = ItemImage(
+                    item_id=item_id, image=request.FILES[file])
+
+                new_item_image.save()
+
+            return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+
+        return HttpResponse('{"status_code": -1, "message": "error"}', content_type='application/json')

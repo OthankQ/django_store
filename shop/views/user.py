@@ -148,6 +148,12 @@ def rateUser(request):
 
 
 def getPostUserImage(request):
+
+    # Check if the user is logged in
+    if not request.user.is_authenticated:
+
+        return HttpResponse('{"status_code": -1, "message": "Login required"}', content_type='application/json')
+
     for file in request.FILES:
         user_info = UserAdditionalInfo.objects.get(user_id=request.user.id)
         user_info.image = request.FILES[file]
