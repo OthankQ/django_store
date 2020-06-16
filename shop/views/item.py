@@ -29,7 +29,7 @@ def getPostItem(request):
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                               str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image)}
+                               str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image), 'description': Items[i].desc}
 
                 data = json.dumps(data)
 
@@ -63,7 +63,7 @@ def getPostItem(request):
                 for i in range(0, len(Items)):
 
                     data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i].name, 'price':
-                               str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image)}
+                               str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image), 'description': Items[i].desc}
 
                 data = json.dumps(data)
 
@@ -81,7 +81,7 @@ def getPostItem(request):
         for i in range(0, len(Items)):
 
             data[i] = {'item_id': Items[i].item_id, 'item_name': Items[i]
-                       .name, 'price': str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image)}
+                       .name, 'price': str(Items[i].price), 'stock': Items[i].stock, 'image': str(Items[i].image), 'description': Items[i].desc}
 
         data = json.dumps(data)
 
