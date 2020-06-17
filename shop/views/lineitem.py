@@ -159,7 +159,7 @@ def getPostCart(request):
             cart_list = Invoice.objects.get(
                 status_id=1, user_id=request.user.id)
 
-            if len(cart) == 0:
+            if len(cart_list) == 0:
                 cart = Invoice(date=datetime.now(),
                                user_id=request.user.id, status_id=1)
             # If there is an existing cart, use that
