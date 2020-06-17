@@ -156,7 +156,7 @@ def getPostCart(request):
         try:
 
             # Query for the 'cart' status invoice. If there isn't one, create one
-            cart_list = Invoice.objects.get(
+            cart_list = Invoice.objects.filter(
                 status_id=1, user_id=request.user.id)
 
             if len(cart_list) == 0:
