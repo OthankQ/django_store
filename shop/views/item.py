@@ -145,9 +145,16 @@ def getPostItem(request):
 
             new_item.save()
 
+            new_item_id = new_item.item_id
+
+            data = {
+                "status_code": 0,
+                "message": "Success",
+                "item_id": new_item_id}
+
         print('A New item has been added successfully')
 
-        return HttpResponse('{"status_code": 0, "message": "Success"}', content_type='application/json')
+        return HttpResponse(f'{data}', content_type='application/json')
 
 
 def deleteItem(request):
