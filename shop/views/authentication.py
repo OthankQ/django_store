@@ -231,12 +231,8 @@ def forgotPassword(request):
 
     # Check if retrieved email matches any in the user db
     user = User.objects.filter(email=email)
-    user_additional_info = UserAdditionalInfo.objects.get(user_id=user[0].id)
-
-    # Set a checkpoint to see if this user is verified
-    if user_additional_info.verified == 0:
-
-        return HttpResponse('{"status_code": -12, "message": "This user is not verified"}', content_type='application/json')
+    user_additional_info = UserAdditionalInfo.objects.filter(
+        user_id=user[0].id)
 
     # If there is no match, send a status code
 
@@ -246,6 +242,12 @@ def forgotPassword(request):
 
     # If there is a match, set password_resetting to 1
     elif len(user) > 0:
+
+        # Set a checkpoint to see if this user is verified
+        if user_additional_info[0].verified == 0:
+
+            return HttpResponse('{"status_code": -12, "message": "This user is not verified"}', content_type='application/json')
+
         print(user_additional_info.password_resetting)
         user_additional_info.password_resetting = True
         user_additional_info.save()
