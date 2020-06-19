@@ -2,6 +2,7 @@ from django.shortcuts import render
 
 from django.http import HttpResponse
 from shop.models import UserAdditionalInfo, Item, Invoice, LineItem, InvoiceStatus, LineItemStatus, Notification, Message, PassKey
+from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
@@ -306,7 +307,7 @@ def deleteLineItem(request):
 
         # Query for the lineitem using line_item and current cart(invoice) id
         line_item = LineItem.objects.get(
-            line_item=data['line_item_id'], status_id=1 | status_id=5)
+            Q(line_item=data['line_item_id']), Q(status_id=1) | Q(status_id=5))
         invoice = Invoice.objects.get(invoice_id=line_item.invoice_id)
         buyer = invoice.user_id
 
